@@ -66,16 +66,25 @@
         .alert-breach { animation: alertPulse 1s infinite; border-color: rgba(239, 68, 68, 0.8) !important; }
         @keyframes alertPulse { 0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); } 50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8); } }
         
-        .progress-bar-striped {
-            background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
-            background-size: 1rem 1rem;
-            animation: progress-bar-stripes 1s linear infinite;
+        .transaction-item { position: relative; }
+        .delete-btn {
+            opacity: 0;
+            transition: all 0.2s ease;
         }
-        @keyframes progress-bar-stripes { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }
+        .transaction-item:hover .delete-btn {
+            opacity: 1;
+        }
         
-        .smart-advice-card { border-left: 4px solid #10b981; }
-        .smart-warning-card { border-left: 4px solid #f59e0b; }
-        .smart-danger-card { border-left: 4px solid #ef4444; }
+        .ai-thinking { animation: aiPulse 2s infinite; }
+        @keyframes aiPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        
+        .pattern-card {
+            border-left: 3px solid #8b5cf6;
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
+        }
+        
+        .prediction-up { color: #10b981; }
+        .prediction-down { color: #ef4444; }
     </style>
 </head>
 <body class="text-white min-h-screen overflow-x-hidden">
@@ -88,7 +97,6 @@
         <div class="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto opacity-50">
             <div class="mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold mb-2">Welcome back, <span class="gradient-text">Demo User</span>! 🎯</h1>
-                <p class="text-gray-400 text-lg">Your AI coach has saved you <span class="text-green-400 font-bold">$245</span> this month</p>
             </div>
         </div>
     </div>
@@ -101,7 +109,7 @@
                     <i class="fas fa-piggy-bank text-4xl"></i>
                 </div>
                 <h1 class="text-5xl font-bold mb-4 gradient-text">SmartSave AI</h1>
-                <p class="text-xl text-gray-300 mb-6">Your intelligent financial companion with smart budget alerts and daily spending guidance.</p>
+                <p class="text-xl text-gray-300 mb-6">AI-powered spending analysis with pattern detection and smart predictions.</p>
             </div>
             
             <div class="glass rounded-3xl p-8 border border-gray-700 shadow-2xl bg-slate-900/80">
@@ -132,6 +140,24 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-[70] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 glass rounded-2xl border border-red-500/30 bg-slate-900">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trash-alt text-red-400 text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-2">Delete Transaction?</h3>
+                <p class="text-gray-400 mb-6">This will remove the transaction and reverse its effect on your balance. This action cannot be undone.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all">Cancel</button>
+                    <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-bold transition-all">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-40 glass border-b border-gray-800 hidden" id="main-nav">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -141,6 +167,9 @@
                         <i class="fas fa-piggy-bank text-xl"></i>
                     </div>
                     <span class="text-xl font-bold gradient-text">SmartSave AI</span>
+                    <span id="ai-status" class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-xs text-indigo-300 border border-indigo-500/30 ml-2">
+                        <i class="fas fa-robot ai-thinking"></i> AI Active
+                    </span>
                 </div>
                 <div class="flex items-center gap-6">
                     <div class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/20 border border-orange-500/30">
@@ -163,6 +192,9 @@
                                 <button onclick="openSavingsGoalModal()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 text-white flex items-center gap-2 mb-1">
                                     <i class="fas fa-piggy-bank text-emerald-400"></i> Set Savings Goal
                                 </button>
+                                <button onclick="showAIReport()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 text-white flex items-center gap-2 mb-1">
+                                    <i class="fas fa-brain text-purple-400"></i> AI Analysis
+                                </button>
                                 <button onclick="logout()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 text-red-400 flex items-center gap-2">
                                     <i class="fas fa-sign-out-alt"></i> Logout
                                 </button>
@@ -179,7 +211,7 @@
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeBudgetModal()"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 glass rounded-2xl border border-gray-700 bg-slate-900">
             <h3 class="text-2xl font-bold mb-2">Set Monthly Budget</h3>
-            <p class="text-gray-400 mb-4">I'll alert you at 80% and warn you if you breach it</p>
+            <p class="text-gray-400 mb-4">AI will alert you at 80% and warn on breach</p>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-2">Monthly Budget ($)</label>
@@ -198,7 +230,7 @@
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeSavingsGoalModal()"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 glass rounded-2xl border border-gray-700 bg-slate-900">
             <h3 class="text-2xl font-bold mb-2">Set Savings Target</h3>
-            <p class="text-gray-400 mb-4">Your daily spending limit will be calculated from this</p>
+            <p class="text-gray-400 mb-4">AI will calculate optimal daily spending</p>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-2">Target Savings ($)</label>
@@ -216,29 +248,27 @@
         </div>
     </div>
 
-    <!-- Bank Modal -->
-    <div id="bank-modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeBankModal()"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl p-6 glass rounded-3xl border border-gray-700 max-h-[90vh] overflow-y-auto bg-slate-900">
+    <!-- AI Analysis Modal -->
+    <div id="ai-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeAIModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl p-6 glass rounded-3xl border border-purple-500/30 bg-slate-900 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold">Connect Your Bank</h3>
-                <button onclick="closeBankModal()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                        <i class="fas fa-brain text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold">AI Spending Analysis</h3>
+                        <p class="text-sm text-gray-400">Pattern detection & behavioral insights</p>
+                    </div>
+                </div>
+                <button onclick="closeAIModal()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div id="bank-selection" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div onclick="selectBank('Chase')" class="bank-card glass p-4 rounded-2xl border border-gray-700 flex flex-col items-center gap-3 hover:bg-gray-800">
-                    <div class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold">C</div>
-                    <span class="font-semibold">Chase</span>
-                </div>
-                <div onclick="selectBank('Bank of America')" class="bank-card glass p-4 rounded-2xl border border-gray-700 flex flex-col items-center gap-3 hover:bg-gray-800">
-                    <div class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-2xl font-bold">B</div>
-                    <span class="font-semibold">Bank of America</span>
-                </div>
-                <div onclick="selectBank('Wells Fargo')" class="bank-card glass p-4 rounded-2xl border border-gray-700 flex flex-col items-center gap-3 hover:bg-gray-800">
-                    <div class="w-16 h-16 rounded-full bg-yellow-600 flex items-center justify-center text-2xl font-bold">W</div>
-                    <span class="font-semibold">Wells Fargo</span>
-                </div>
+            
+            <div id="ai-content" class="space-y-6">
+                <!-- AI content injected here -->
             </div>
         </div>
     </div>
@@ -259,6 +289,11 @@
             </div>
         </div>
 
+        <!-- AI Quick Insights -->
+        <div id="ai-quick-insights" class="hidden mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Injected by AI -->
+        </div>
+
         <!-- Daily Limit Card -->
         <div id="daily-limit-card" class="hidden mb-6 glass rounded-2xl p-4 border border-indigo-500/30 bg-indigo-900/10 slide-in">
             <div class="flex items-center justify-between">
@@ -267,7 +302,7 @@
                         <i class="fas fa-calculator text-indigo-400 text-xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-400">Daily Spending Limit</p>
+                        <p class="text-sm text-gray-400">AI Recommended Daily Limit</p>
                         <h3 class="text-2xl font-bold text-indigo-400" id="daily-limit-amount">$0</h3>
                         <p class="text-xs text-gray-500" id="days-remaining">to reach your goal</p>
                     </div>
@@ -283,7 +318,7 @@
         <!-- Welcome -->
         <div class="mb-8 text-center slide-in">
             <h1 class="text-4xl md:text-5xl font-bold mb-2">Welcome, <span class="gradient-text" id="display-name">Saver</span>! 🎉</h1>
-            <p class="text-gray-400 text-lg" id="smart-subtitle">Start by setting your budget and savings goal</p>
+            <p class="text-gray-400 text-lg" id="smart-subtitle">AI is monitoring your spending patterns</p>
         </div>
 
         <!-- Stats Grid -->
@@ -300,8 +335,6 @@
                         <i class="fas fa-piggy-bank text-emerald-400 text-xl"></i>
                     </div>
                 </div>
-                
-                <!-- Mini Savings Chart -->
                 <div class="h-24 mt-4" id="savings-chart-container">
                     <div class="empty-state h-full flex items-center justify-center">
                         <p class="text-xs text-gray-500">Set a savings goal to see progress</p>
@@ -344,15 +377,16 @@
             </div>
         </div>
 
-        <!-- Smart Insights -->
-        <div class="mb-8 glass rounded-2xl p-6 border border-indigo-500/30 slide-in" id="smart-insights">
+        <!-- AI Insights Panel -->
+        <div class="mb-8 glass rounded-2xl p-6 border border-purple-500/30 slide-in">
             <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i class="fas fa-brain text-indigo-400"></i>
-                Smart Insights
+                <i class="fas fa-robot text-purple-400"></i>
+                AI Insights & Recommendations
             </h3>
-            <div id="insights-container" class="space-y-3">
-                <div class="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                    <p class="text-sm text-gray-300">Set your budget and savings goal to get personalized daily spending limits and smart alerts.</p>
+            <div id="ai-insights-container" class="space-y-3">
+                <div class="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3">
+                    <i class="fas fa-info-circle text-indigo-400 mt-1"></i>
+                    <p class="text-sm text-gray-300">Start adding transactions to enable AI pattern detection and personalized recommendations.</p>
                 </div>
             </div>
         </div>
@@ -370,6 +404,9 @@
                             <i class="fas fa-chart-pie text-indigo-400"></i>
                             Spending Analytics
                         </h3>
+                        <button onclick="showAIReport()" class="text-sm px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all">
+                            <i class="fas fa-brain mr-1"></i> AI Analysis
+                        </button>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
@@ -388,22 +425,6 @@
                                 <i class="fas fa-list text-4xl text-gray-600 mb-3"></i>
                                 <p class="text-sm text-gray-500">Categories will appear here</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Goals -->
-                <div class="glass rounded-2xl p-6 slide-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-bold flex items-center gap-2">
-                            <i class="fas fa-bullseye text-pink-400"></i>
-                            Savings Goals
-                        </h3>
-                    </div>
-                    <div id="goals-container" class="space-y-4">
-                        <div class="empty-state py-8">
-                            <i class="fas fa-bullseye text-gray-600"></i>
-                            <p class="text-sm text-gray-500">No goals yet</p>
                         </div>
                     </div>
                 </div>
@@ -458,12 +479,15 @@
                     </div>
                 </div>
 
-                <!-- Activity -->
+                <!-- Activity with Delete -->
                 <div class="glass rounded-2xl p-6 slide-in">
-                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                        <i class="fas fa-history text-blue-400"></i>
-                        Recent Activity
-                    </h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold flex items-center gap-2">
+                            <i class="fas fa-history text-blue-400"></i>
+                            Recent Activity
+                        </h3>
+                        <span class="text-xs text-gray-500">Swipe to delete</span>
+                    </div>
                     <div id="recent-activity" class="space-y-3">
                         <div class="empty-state py-8">
                             <i class="fas fa-receipt text-gray-600"></i>
@@ -504,6 +528,16 @@
         let budgetSpent = 0;
         let savingsGoal = { amount: 0, deadline: null, dailyLimit: 0 };
         let alertShown = { eighty: false, breached: false };
+        let transactionToDelete = null;
+        
+        // AI State
+        let aiPatterns = {
+            spendingVelocity: [],
+            categoryTrends: {},
+            dayOfWeekPattern: {},
+            unusualSpending: [],
+            predictions: {}
+        };
 
         function initDatePicker() {
             const today = new Date().toISOString().split('T')[0];
@@ -515,7 +549,6 @@
                 dateInput.max = today;
             }
             
-            // Set savings date to end of current month
             if (savingsDateInput) {
                 const lastDay = new Date();
                 lastDay.setMonth(lastDay.getMonth() + 1);
@@ -525,7 +558,343 @@
             }
         }
 
-        // Budget Functions
+        // Delete Functions
+        function openDeleteModal(id) {
+            transactionToDelete = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            transactionToDelete = null;
+        }
+
+        function confirmDelete() {
+            if (!transactionToDelete) return;
+            
+            const index = transactions.findIndex(t => t.id === transactionToDelete);
+            if (index === -1) {
+                closeDeleteModal();
+                return;
+            }
+            
+            const transaction = transactions[index];
+            
+            // Reverse the transaction effects
+            if (transaction.type === 'income') {
+                savings -= transaction.amount;
+            } else {
+                savings += transaction.amount;
+                budgetSpent -= transaction.amount;
+            }
+            
+            // Remove from array
+            transactions.splice(index, 1);
+            
+            // Update all displays
+            updateSavingsDisplay();
+            updateBudgetDisplay();
+            updateDailySpending();
+            updateTransactionsUI();
+            updateChartWithData();
+            runAIAnalysis(); // Re-run AI without deleted transaction
+            
+            closeDeleteModal();
+            showNotification('Deleted', 'Transaction removed and balance corrected', 'success');
+        }
+
+        // AI Analysis System
+        function runAIAnalysis() {
+            if (transactions.length < 3) {
+                document.getElementById('ai-insights-container').innerHTML = `
+                    <div class="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3">
+                        <i class="fas fa-info-circle text-indigo-400 mt-1"></i>
+                        <p class="text-sm text-gray-300">Add at least 3 transactions for AI pattern detection.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            document.getElementById('ai-status').classList.remove('hidden');
+            
+            // Analyze patterns
+            analyzeSpendingPatterns();
+            detectAnomalies();
+            generatePredictions();
+            generateAIInsights();
+        }
+
+        function analyzeSpendingPatterns() {
+            const expenses = transactions.filter(t => t.type === 'expense');
+            
+            // Category trends
+            aiPatterns.categoryTrends = {};
+            expenses.forEach(t => {
+                if (!aiPatterns.categoryTrends[t.category]) {
+                    aiPatterns.categoryTrends[t.category] = { count: 0, total: 0, dates: [] };
+                }
+                aiPatterns.categoryTrends[t.category].count++;
+                aiPatterns.categoryTrends[t.category].total += t.amount;
+                aiPatterns.categoryTrends[t.category].dates.push(new Date(t.date));
+            });
+            
+            // Day of week pattern
+            aiPatterns.dayOfWeekPattern = {};
+            expenses.forEach(t => {
+                const day = new Date(t.date).getDay();
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayName = dayNames[day];
+                
+                if (!aiPatterns.dayOfWeekPattern[dayName]) {
+                    aiPatterns.dayOfWeekPattern[dayName] = { count: 0, total: 0 };
+                }
+                aiPatterns.dayOfWeekPattern[dayName].count++;
+                aiPatterns.dayOfWeekPattern[dayName].total += t.amount;
+            });
+            
+            // Spending velocity (average per day)
+            const dates = expenses.map(t => new Date(t.date).toDateString());
+            const uniqueDates = [...new Set(dates)];
+            const totalSpent = expenses.reduce((sum, t) => sum + t.amount, 0);
+            aiPatterns.spendingVelocity = uniqueDates.length > 0 ? totalSpent / uniqueDates.length : 0;
+        }
+
+        function detectAnomalies() {
+            const expenses = transactions.filter(t => t.type === 'expense');
+            if (expenses.length < 3) return;
+            
+            // Calculate average and standard deviation
+            const amounts = expenses.map(t => t.amount);
+            const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+            const variance = amounts.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / amounts.length;
+            const stdDev = Math.sqrt(variance);
+            
+            // Flag transactions > 2 standard deviations
+            aiPatterns.unusualSpending = expenses.filter(t => t.amount > avg + (2 * stdDev)).map(t => ({
+                ...t,
+                severity: t.amount > avg + (3 * stdDev) ? 'high' : 'medium'
+            }));
+        }
+
+        function generatePredictions() {
+            if (transactions.length < 5) return;
+            
+            const expenses = transactions.filter(t => t.type === 'expense');
+            const daysWithData = [...new Set(expenses.map(t => new Date(t.date).toDateString()))].length;
+            
+            if (daysWithData < 3) return;
+            
+            // Predict monthly spend based on current pace
+            const avgDailySpend = expenses.reduce((sum, t) => sum + t.amount, 0) / daysWithData;
+            const daysInMonth = 30;
+            const projectedMonthly = avgDailySpend * daysInMonth;
+            
+            // Predict if budget will be exceeded
+            aiPatterns.predictions = {
+                projectedMonthlySpend: projectedMonthly,
+                willExceedBudget: monthlyBudget > 0 && projectedMonthly > monthlyBudget,
+                projectedOverspend: monthlyBudget > 0 ? projectedMonthly - monthlyBudget : 0,
+                confidence: Math.min(daysWithData / 7, 1) // Higher confidence with more data
+            };
+        }
+
+        function generateAIInsights() {
+            const insights = [];
+            const expenses = transactions.filter(t => t.type === 'expense');
+            
+            // 1. Top spending category
+            const topCategory = Object.entries(aiPatterns.categoryTrends)
+                .sort((a, b) => b[1].total - a[1].total)[0];
+            
+            if (topCategory) {
+                const percentage = ((topCategory[1].total / expenses.reduce((s, t) => s + t.amount, 0)) * 100).toFixed(0);
+                insights.push({
+                    icon: 'fa-chart-pie',
+                    color: 'purple',
+                    title: 'Top Spending Category',
+                    text: `${topCategory[0].charAt(0).toUpperCase() + topCategory[0].slice(1)} accounts for ${percentage}% of your spending ($${topCategory[1].total.toFixed(0)}).`,
+                    action: percentage > 40 ? 'Consider reducing this category to save more.' : null
+                });
+            }
+            
+            // 2. Day of week pattern
+            const topDay = Object.entries(aiPatterns.dayOfWeekPattern)
+                .sort((a, b) => b[1].total - a[1].total)[0];
+            if (topDay && topDay[1].count > 2) {
+                insights.push({
+                    icon: 'fa-calendar-day',
+                    color: 'blue',
+                    title: 'Spending Pattern Detected',
+                    text: `You tend to spend most on ${topDay[0]}s ($${topDay[1].total.toFixed(0)} total).`,
+                    action: 'Try planning ahead for these high-spend days.'
+                });
+            }
+            
+            // 3. Unusual spending alerts
+            aiPatterns.unusualSpending.slice(0, 2).forEach(unusual => {
+                insights.push({
+                    icon: 'fa-exclamation-circle',
+                    color: unusual.severity === 'high' ? 'red' : 'yellow',
+                    title: unusual.severity === 'high' ? '⚠️ Unusual High Spend' : 'Noticeable Spend',
+                    text: `$${unusual.amount.toFixed(2)} on ${unusual.merchant} is ${unusual.severity === 'high' ? 'significantly' : ''} higher than your average.`,
+                    action: 'Review if this was necessary or a one-time expense.'
+                });
+            });
+            
+            // 4. Budget prediction
+            if (aiPatterns.predictions.willExceedBudget) {
+                insights.push({
+                    icon: 'fa-trending-up',
+                    color: 'red',
+                    title: '🚨 Budget Risk Alert',
+                    text: `At current pace, you'll spend $${aiPatterns.predictions.projectedMonthlySpend.toFixed(0)} this month.`,
+                    action: `Cut $${(aiPatterns.predictions.projectedOverspend / 30).toFixed(0)}/day to stay within budget.`
+                });
+            } else if (aiPatterns.predictions.projectedMonthlySpend > 0 && monthlyBudget > 0) {
+                const remaining = monthlyBudget - aiPatterns.predictions.projectedMonthlySpend;
+                insights.push({
+                    icon: 'fa-check-circle',
+                    color: 'emerald',
+                    title: '✅ On Track',
+                    text: `Projected to stay $${remaining.toFixed(0)} under budget this month.`,
+                    action: 'Great job! Consider putting the extra into savings.'
+                });
+            }
+            
+            // 5. Velocity insight
+            if (aiPatterns.spendingVelocity > 50) {
+                insights.push({
+                    icon: 'fa-tachometer-alt',
+                    color: 'orange',
+                    title: 'Spending Velocity',
+                    text: `Average $${aiPatterns.spendingVelocity.toFixed(0)}/day spending rate.`,
+                    action: aiPatterns.spendingVelocity > 100 ? 'This is high - watch for unnecessary purchases.' : null
+                });
+            }
+            
+            // 6. Savings recommendation
+            if (savingsGoal.amount > 0 && savings < savingsGoal.amount) {
+                const remaining = savingsGoal.amount - savings;
+                const daysLeft = Math.max(1, Math.ceil((new Date(savingsGoal.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
+                const dailyNeeded = remaining / daysLeft;
+                
+                if (dailyNeeded > savingsGoal.dailyLimit * 0.5) {
+                    insights.push({
+                        icon: 'fa-piggy-bank',
+                        color: 'emerald',
+                        title: 'Savings Optimization',
+                        text: `Need $${dailyNeeded.toFixed(0)}/day more to hit goal.`,
+                        action: 'Reduce discretionary spending by 20% to make it.'
+                    });
+                }
+            }
+            
+            // Render insights
+            const container = document.getElementById('ai-insights-container');
+            container.innerHTML = insights.map(i => `
+                <div class="p-4 rounded-lg ${i.color === 'red' ? 'bg-red-500/10 border border-red-500/30' : i.color === 'yellow' ? 'bg-yellow-500/10 border border-yellow-500/30' : i.color === 'emerald' ? 'bg-emerald-500/10 border border-emerald-500/30' : i.color === 'blue' ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-purple-500/10 border border-purple-500/30'} flex items-start gap-3 slide-in pattern-card">
+                    <i class="fas ${i.icon} ${i.color === 'red' ? 'text-red-400' : i.color === 'yellow' ? 'text-yellow-400' : i.color === 'emerald' ? 'text-emerald-400' : i.color === 'blue' ? 'text-blue-400' : 'text-purple-400'} mt-1"></i>
+                    <div class="flex-1">
+                        <p class="font-semibold ${i.color === 'red' ? 'text-red-200' : i.color === 'yellow' ? 'text-yellow-200' : i.color === 'emerald' ? 'text-emerald-200' : i.color === 'blue' ? 'text-blue-200' : 'text-purple-200'}">${i.title}</p>
+                        <p class="text-sm text-gray-300">${i.text}</p>
+                        ${i.action ? `<p class="text-xs mt-2 ${i.color === 'red' ? 'text-red-300' : 'text-emerald-300'} font-medium"><i class="fas fa-lightbulb mr-1"></i>${i.action}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAIReport() {
+            const modal = document.getElementById('ai-modal');
+            const content = document.getElementById('ai-content');
+            
+            // Detailed AI report
+            const expenses = transactions.filter(t => t.type === 'expense');
+            const totalSpent = expenses.reduce((s, t) => s + t.amount, 0);
+            
+            let html = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="glass rounded-xl p-4 text-center">
+                        <p class="text-sm text-gray-400">Transactions Analyzed</p>
+                        <p class="text-2xl font-bold text-purple-400">${transactions.length}</p>
+                    </div>
+                    <div class="glass rounded-xl p-4 text-center">
+                        <p class="text-sm text-gray-400">Pattern Confidence</p>
+                        <p class="text-2xl font-bold text-purple-400">${Math.min(Math.floor(transactions.length / 10 * 100), 95)}%</p>
+                    </div>
+                    <div class="glass rounded-xl p-4 text-center">
+                        <p class="text-sm text-gray-400">Avg Transaction</p>
+                        <p class="text-2xl font-bold text-purple-400">$${expenses.length > 0 ? (totalSpent / expenses.length).toFixed(0) : 0}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Category breakdown with AI commentary
+            if (Object.keys(aiPatterns.categoryTrends).length > 0) {
+                html += `<h4 class="font-bold text-lg mb-3 text-purple-300">Category Intelligence</h4><div class="space-y-3 mb-6">`;
+                
+                Object.entries(aiPatterns.categoryTrends)
+                    .sort((a, b) => b[1].total - a[1].total)
+                    .forEach(([cat, data]) => {
+                        const avg = data.total / data.count;
+                        const freq = data.count > 3 ? 'frequent' : data.count === 1 ? 'one-time' : 'occasional';
+                        html += `
+                            <div class="glass rounded-lg p-3 flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold capitalize">${cat}</p>
+                                    <p class="text-xs text-gray-400">${data.count} transactions • ${freq} • avg $${avg.toFixed(0)}</p>
+                                </div>
+                                <p class="font-bold text-purple-400">$${data.total.toFixed(0)}</p>
+                            </div>
+                        `;
+                    });
+                html += `</div>`;
+            }
+            
+            // Behavioral predictions
+            if (aiPatterns.predictions.projectedMonthlySpend) {
+                html += `
+                    <h4 class="font-bold text-lg mb-3 text-purple-300">AI Predictions</h4>
+                    <div class="glass rounded-xl p-4 mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-400">Projected Monthly Spend</span>
+                            <span class="text-xl font-bold ${aiPatterns.predictions.willExceedBudget ? 'text-red-400' : 'text-emerald-400'}">$${aiPatterns.predictions.projectedMonthlySpend.toFixed(0)}</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: ${Math.min(aiPatterns.predictions.confidence * 100, 100)}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Confidence: ${(aiPatterns.predictions.confidence * 100).toFixed(0)}% (more data = better predictions)</p>
+                    </div>
+                `;
+            }
+            
+            // Recommendations
+            html += `
+                <h4 class="font-bold text-lg mb-3 text-purple-300">AI Recommendations</h4>
+                <ul class="space-y-2">
+                    <li class="flex items-start gap-2 text-sm text-gray-300">
+                        <i class="fas fa-check text-emerald-400 mt-1"></i>
+                        <span>Set up automatic transfers on payday to remove temptation to spend</span>
+                    </li>
+                    <li class="flex items-start gap-2 text-sm text-gray-300">
+                        <i class="fas fa-check text-emerald-400 mt-1"></i>
+                        <span>Review subscriptions - AI detected potential recurring expenses</span>
+                    </li>
+                    <li class="flex items-start gap-2 text-sm text-gray-300">
+                        <i class="fas fa-check text-emerald-400 mt-1"></i>
+                        <span>Use the 24-hour rule for purchases over $50</span>
+                    </li>
+                </ul>
+            `;
+            
+            content.innerHTML = html;
+            modal.classList.remove('hidden');
+        }
+
+        function closeAIModal() {
+            document.getElementById('ai-modal').classList.add('hidden');
+        }
+
+        // Budget & Savings Functions
         function openBudgetModal() {
             document.getElementById('budget-modal').classList.remove('hidden');
             document.getElementById('budget-input').focus();
@@ -547,10 +916,9 @@
             calculateDailyLimit();
             closeBudgetModal();
             showNotification('Budget Set', `Monthly budget: $${monthlyBudget.toLocaleString()}`, 'success');
-            generateSmartInsights();
+            runAIAnalysis();
         }
 
-        // Savings Goal Functions
         function openSavingsGoalModal() {
             document.getElementById('savings-goal-modal').classList.remove('hidden');
             document.getElementById('savings-goal-input').focus();
@@ -574,7 +942,7 @@
             updateSavingsDisplay();
             closeSavingsGoalModal();
             showNotification('Goal Set', `Save $${amount.toLocaleString()} by ${new Date(deadline).toLocaleDateString()}`, 'success');
-            generateSmartInsights();
+            runAIAnalysis();
         }
 
         function calculateDailyLimit() {
@@ -587,19 +955,14 @@
             const deadline = new Date(savingsGoal.deadline);
             const daysLeft = Math.max(1, Math.ceil((deadline - today) / (1000 * 60 * 60 * 24)));
             
-            // Daily spending limit = (Monthly Budget - Savings Goal) / Days left in month
             const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
             const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
             
-            // Must save this much per day
             const dailySavingsRequired = savingsGoal.amount / daysLeft;
-            
-            // Can spend this much per day
             const dailySpendLimit = Math.max(0, (monthlyBudget - budgetSpent) / daysRemaining - dailySavingsRequired);
             
             savingsGoal.dailyLimit = dailySpendLimit;
             
-            // Show daily limit card
             document.getElementById('daily-limit-card').classList.remove('hidden');
             document.getElementById('daily-limit-amount').textContent = `$${dailySpendLimit.toFixed(0)}`;
             document.getElementById('days-remaining').textContent = `${daysLeft} days to save $${savingsGoal.amount.toLocaleString()}`;
@@ -631,7 +994,7 @@
             }
         }
 
-        // Smart Alert System
+        // Alert System
         function checkBudgetAlerts() {
             if (monthlyBudget <= 0) return;
             
@@ -642,21 +1005,18 @@
             const advice = document.getElementById('alert-advice');
             const icon = document.getElementById('alert-icon');
             
-            // 80% Warning (show once)
             if (percentUsed >= 80 && percentUsed < 100 && !alertShown.eighty) {
                 alertShown.eighty = true;
                 banner.classList.remove('hidden', 'alert-breach');
-                banner.classList.add('smart-warning-card');
                 banner.style.borderLeftColor = '#f59e0b';
                 icon.className = 'fas fa-exclamation-triangle text-2xl mt-1 text-yellow-400';
                 title.textContent = '⚠️ Budget Alert: 80% Used';
                 title.className = 'font-bold text-lg mb-1 text-yellow-400';
-                message.textContent = `You've spent $${budgetSpent.toFixed(2)} of your $${monthlyBudget.toLocaleString()} monthly budget.`;
+                message.textContent = `You've spent $${budgetSpent.toFixed(2)} of your $${monthlyBudget.toLocaleString()} budget.`;
                 advice.textContent = `Daily limit reduced to $${(savingsGoal.dailyLimit * 0.5).toFixed(0)}. Consider pausing non-essential spending.`;
-                showNotification('Budget Warning', 'You\'ve reached 80% of your budget!', 'error');
+                showNotification('Budget Warning', 'You\'ve reached 80% of your budget!', 'warning');
             }
             
-            // 100% Breach (show every time)
             if (percentUsed >= 100) {
                 banner.classList.remove('hidden');
                 banner.classList.add('alert-breach');
@@ -668,12 +1028,11 @@
                 
                 const overspend = budgetSpent - monthlyBudget;
                 const daysLeft = Math.max(1, new Date(savingsGoal.deadline || new Date().setMonth(new Date().getMonth() + 1)) - new Date()) / (1000 * 60 * 60 * 24);
-                advice.textContent = `URGENT: Cut spending by $${(overspend / daysLeft + savingsGoal.dailyLimit).toFixed(0)}/day to recover. Avoid all non-essential purchases!`;
+                advice.textContent = `URGENT: Cut spending by $${(overspend / daysLeft + savingsGoal.dailyLimit).toFixed(0)}/day to recover.`;
                 
                 if (!alertShown.breached) {
                     alertShown.breached = true;
                     showNotification('BUDGET BREACHED!', 'Stop spending immediately!', 'error');
-                    createConfetti();
                 }
             }
         }
@@ -682,63 +1041,7 @@
             document.getElementById('smart-alert-banner').classList.add('hidden');
         }
 
-        // Generate Smart Insights
-        function generateSmartInsights() {
-            const container = document.getElementById('insights-container');
-            const insights = [];
-            
-            if (monthlyBudget > 0 && savingsGoal.amount > 0) {
-                const daysLeft = Math.max(1, Math.ceil((new Date(savingsGoal.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
-                const dailySave = savingsGoal.amount / daysLeft;
-                const dailySpend = savingsGoal.dailyLimit;
-                
-                insights.push({
-                    type: 'success',
-                    icon: 'fa-lightbulb',
-                    title: 'Smart Daily Plan',
-                    text: `Save $${dailySave.toFixed(0)}/day and spend max $${dailySpend.toFixed(0)}/day to hit your goal.`
-                });
-                
-                if (budgetSpent > monthlyBudget * 0.5) {
-                    const pace = (budgetSpent / (new Date().getDate())) * 30;
-                    if (pace > monthlyBudget) {
-                        insights.push({
-                            type: 'warning',
-                            icon: 'fa-chart-line',
-                            title: 'Spending Pace Alert',
-                            text: `At this pace, you'll spend $${pace.toFixed(0)} this month. Cut back to stay under $${monthlyBudget}!`
-                        });
-                    }
-                }
-            } else if (monthlyBudget > 0) {
-                insights.push({
-                    type: 'info',
-                    icon: 'fa-piggy-bank',
-                    title: 'Pro Tip',
-                    text: 'Set a savings goal to get a personalized daily spending limit and track your progress!'
-                });
-            }
-            
-            if (insights.length === 0) {
-                insights.push({
-                    type: 'info',
-                    icon: 'fa-info-circle',
-                    title: 'Get Started',
-                    text: 'Set your monthly budget and savings goal to unlock smart spending insights and alerts.'
-                });
-            }
-            
-            container.innerHTML = insights.map(i => `
-                <div class="p-3 rounded-lg ${i.type === 'warning' ? 'bg-yellow-500/10 border border-yellow-500/30' : i.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-indigo-500/10 border border-indigo-500/30'} flex items-start gap-3 slide-in">
-                    <i class="fas ${i.icon} ${i.type === 'warning' ? 'text-yellow-400' : i.type === 'success' ? 'text-emerald-400' : 'text-indigo-400'} mt-1"></i>
-                    <div>
-                        <p class="font-semibold ${i.type === 'warning' ? 'text-yellow-200' : i.type === 'success' ? 'text-emerald-200' : 'text-indigo-200'}">${i.title}</p>
-                        <p class="text-sm text-gray-300">${i.text}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
+        // Display Functions
         function updateBudgetDisplay() {
             const budgetEl = document.getElementById('monthly-budget');
             const progressEl = document.getElementById('budget-progress');
@@ -750,7 +1053,6 @@
                 const percent = Math.min((budgetSpent / monthlyBudget) * 100, 100);
                 progressEl.style.width = percent + '%';
                 
-                // Color coding
                 if (percent >= 100) {
                     progressEl.className = 'h-3 rounded-full transition-all duration-500 bg-red-500 progress-bar-striped';
                     card.classList.add('alert-breach');
@@ -780,12 +1082,7 @@
                 const percent = Math.min((savings / savingsGoal.amount) * 100, 100);
                 goalText.textContent = `Goal: $${savingsGoal.amount.toLocaleString()} (${percent.toFixed(0)}%)`;
                 goalText.className = 'text-sm mt-1 ' + (percent >= 100 ? 'text-emerald-400 font-bold' : 'text-gray-400');
-                
-                // Update mini chart
                 updateSavingsChart(percent);
-            } else {
-                goalText.textContent = 'Goal: Not set';
-                goalText.className = 'text-sm mt-1 text-gray-500';
             }
         }
 
@@ -805,10 +1102,7 @@
                     labels: ['Saved', 'Remaining'],
                     datasets: [{
                         data: [percent, 100 - percent],
-                        backgroundColor: [
-                            'rgba(16, 185, 129, 0.8)',
-                            'rgba(75, 85, 99, 0.3)'
-                        ],
+                        backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(75, 85, 99, 0.3)'],
                         borderWidth: 0,
                         borderRadius: 4
                     }]
@@ -817,15 +1111,10 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         x: { display: false, max: 100 },
-                        y: { 
-                            ticks: { color: '#9ca3af', font: { size: 10 } },
-                            grid: { display: false }
-                        }
+                        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } }
                     }
                 }
             });
@@ -870,7 +1159,7 @@
                 document.getElementById('user-initial').textContent = name[0].toUpperCase();
                 
                 initDatePicker();
-                showNotification('Welcome!', `Your smart savings journey begins, ${name}!`, 'success');
+                showNotification('Welcome!', `AI monitoring activated, ${name}!`, 'success');
             }, 500);
         });
 
@@ -879,7 +1168,15 @@
             location.reload();
         }
 
-        // Chart Functions
+        function openBankModal() {
+            document.getElementById('bank-modal').classList.remove('hidden');
+        }
+
+        function closeBankModal() {
+            document.getElementById('bank-modal').classList.add('hidden');
+        }
+
+        // Charts
         function updateChartWithData() {
             const breakdown = {};
             transactions.forEach(t => {
@@ -895,39 +1192,18 @@
             
             const labels = Object.keys(breakdown).map(c => c.charAt(0).toUpperCase() + c.slice(1));
             const data = Object.values(breakdown);
-            const colors = [
-                'rgba(244, 63, 94, 0.8)',
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(139, 92, 246, 0.8)',
-                'rgba(245, 158, 11, 0.8)'
-            ];
+            const colors = ['rgba(244, 63, 94, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(245, 158, 11, 0.8)'];
             
-            if (spendingChart) {
-                spendingChart.destroy();
-            }
+            if (spendingChart) spendingChart.destroy();
             
             const ctx = document.getElementById('spendingChart').getContext('2d');
             spendingChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors,
-                        borderWidth: 0,
-                        hoverOffset: 10
-                    }]
-                },
+                data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 10 }] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: '#9ca3af', padding: 15, usePointStyle: true, font: { size: 11 } }
-                        }
-                    },
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', padding: 15, usePointStyle: true, font: { size: 11 } } } },
                     cutout: '60%'
                 }
             });
@@ -940,7 +1216,6 @@
             if (!container) return;
             
             const total = Object.values(breakdownData).reduce((a, b) => a + b, 0);
-            
             const colors = {
                 food: { color: 'rose', icon: 'fa-utensils', label: 'Food & Dining' },
                 shopping: { color: 'blue', icon: 'fa-shopping-bag', label: 'Shopping' },
@@ -970,43 +1245,6 @@
                         </div>
                     `;
                 }).join('');
-        }
-
-        // Bank Functions
-        function openBankModal() {
-            document.getElementById('bank-modal').classList.remove('hidden');
-        }
-
-        function closeBankModal() {
-            document.getElementById('bank-modal').classList.add('hidden');
-        }
-
-        function selectBank(bankName) {
-            // Simulate connection
-            setTimeout(() => {
-                const balance = Math.floor(Math.random() * 5000) + 1000;
-                savings += balance;
-                updateSavingsDisplay();
-                
-                showNotification('Bank Connected!', `${bankName}: $${balance.toLocaleString()}`, 'success');
-                closeBankModal();
-                createConfetti();
-            }, 1000);
-        }
-
-        function createConfetti() {
-            const colors = ['#f43f5e', '#8b5cf6', '#10b981', '#f59e0b', '#3b82f6'];
-            for (let i = 0; i < 30; i++) {
-                setTimeout(() => {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.left = Math.random() * 100 + 'vw';
-                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                    document.getElementById('confetti-container').appendChild(confetti);
-                    setTimeout(() => confetti.remove(), 4000);
-                }, i * 30);
-            }
         }
 
         // Transaction Functions
@@ -1049,37 +1287,35 @@
             
             if (isIncome) {
                 savings += amount;
-                updateSavingsDisplay();
             } else {
                 savings -= amount;
-                updateSavingsDisplay();
                 budgetSpent += amount;
-                updateBudgetDisplay();
-                updateDailySpending();
+            }
+            
+            updateSavingsDisplay();
+            updateBudgetDisplay();
+            updateDailySpending();
+            updateTransactionsUI();
+            updateChartWithData();
+            runAIAnalysis();
+            
+            // Check daily limit breach
+            if (!isIncome && savingsGoal.dailyLimit > 0) {
+                const today = new Date().toDateString();
+                const spentToday = transactions
+                    .filter(t => t.type === 'expense' && new Date(t.date).toDateString() === today)
+                    .reduce((sum, t) => sum + t.amount, 0);
                 
-                // Check if this expense breaches daily limit
-                if (savingsGoal.dailyLimit > 0) {
-                    const today = new Date().toDateString();
-                    const spentToday = transactions
-                        .filter(t => t.type === 'expense' && new Date(t.date).toDateString() === today)
-                        .reduce((sum, t) => sum + t.amount, 0);
-                    
-                    if (spentToday > savingsGoal.dailyLimit && spentToday - amount <= savingsGoal.dailyLimit) {
-                        showNotification('Daily Limit Exceeded!', `You've spent $${spentToday.toFixed(2)} today. Limit was $${savingsGoal.dailyLimit.toFixed(0)}`, 'error');
-                    }
+                if (spentToday > savingsGoal.dailyLimit) {
+                    showNotification('Daily Limit Exceeded!', `Spent $${spentToday.toFixed(2)} of $${savingsGoal.dailyLimit.toFixed(0)} limit`, 'error');
                 }
             }
             
-            updateTransactionsUI();
-            updateChartWithData();
-            generateSmartInsights();
-            
             if (transactions.length === 1) {
                 updateStreak();
-                createConfetti();
-                showNotification('First Step!', 'You\'ve started your savings journey!', 'success');
+                showNotification('First Step!', 'AI is now monitoring your patterns', 'success');
             } else {
-                showNotification('Success', 'Transaction added!', 'success');
+                showNotification('Success', 'Transaction added & analyzed by AI', 'success');
             }
             
             document.getElementById('transaction-amount').value = '';
@@ -1099,32 +1335,23 @@
             }
             
             const categoryIcons = {
-                food: 'fa-coffee',
-                shopping: 'fa-shopping-bag',
-                transport: 'fa-bus',
-                entertainment: 'fa-film',
-                bills: 'fa-bolt',
-                others: 'fa-receipt'
+                food: 'fa-coffee', shopping: 'fa-shopping-bag', transport: 'fa-bus',
+                entertainment: 'fa-film', bills: 'fa-bolt', others: 'fa-receipt'
             };
-            
             const categoryColors = {
-                food: 'rose',
-                shopping: 'blue',
-                transport: 'emerald',
-                entertainment: 'purple',
-                bills: 'yellow',
-                others: 'gray'
+                food: 'rose', shopping: 'blue', transport: 'emerald',
+                entertainment: 'purple', bills: 'yellow', others: 'gray'
             };
             
-            container.innerHTML = transactions.slice(0, 5).map(t => {
+            container.innerHTML = transactions.slice(0, 10).map(t => {
                 const color = categoryColors[t.category];
                 const icon = categoryIcons[t.category];
                 const date = new Date(t.date);
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 
                 return `
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors slide-in">
-                        <div class="flex items-center gap-3">
+                    <div class="transaction-item flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors slide-in group">
+                        <div class="flex items-center gap-3 flex-1">
                             <div class="w-10 h-10 rounded-full bg-${color}-500/20 flex items-center justify-center">
                                 <i class="fas ${icon} text-${color}-400"></i>
                             </div>
@@ -1133,7 +1360,12 @@
                                 <p class="text-xs text-gray-500">${dateStr} • <span class="text-${color}-400 capitalize">${t.category}</span></p>
                             </div>
                         </div>
-                        <span class="${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'} font-bold">${t.type === 'income' ? '+' : '-'}$${t.amount.toFixed(2)}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'} font-bold">${t.type === 'income' ? '+' : '-'}$${t.amount.toFixed(2)}</span>
+                            <button onclick="openDeleteModal(${t.id})" class="delete-btn w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center text-red-400 transition-all">
+                                <i class="fas fa-trash-alt text-sm"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1155,14 +1387,9 @@
             const notifTitle = document.getElementById('notif-title');
             const notifMessage = document.getElementById('notif-message');
             
-            const colors = {
-                success: 'emerald',
-                error: 'rose',
-                info: 'blue',
-                warning: 'yellow'
-            };
-            
+            const colors = { success: 'emerald', error: 'rose', info: 'blue', warning: 'yellow' };
             const color = colors[type] || 'emerald';
+            
             notif.querySelector('.glass').className = `glass rounded-xl p-4 border border-${color}-500/30 flex items-center gap-3 notification bg-slate-900`;
             notif.querySelector('i').className = `fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info'} text-${color}-400`;
             notifTitle.className = `font-bold text-${color}-400`;

@@ -85,6 +85,20 @@
         
         .prediction-up { color: #10b981; }
         .prediction-down { color: #ef4444; }
+        
+        /* NEW: Date range styles */
+        .date-range-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .date-range-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+        }
     </style>
 </head>
 <body class="text-white min-h-screen overflow-x-hidden">
@@ -237,8 +251,14 @@
                     <input type="number" id="savings-goal-input" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="500" min="1">
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">By End of Month</label>
+                    <label class="block text-sm text-gray-400 mb-2">Target Date</label>
                     <input type="date" id="savings-date-input" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                </div>
+                <!-- NEW: Monthly calculation preview -->
+                <div id="monthly-calc-preview" class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hidden">
+                    <p class="text-sm text-emerald-300 mb-1">Required Monthly Savings:</p>
+                    <p class="text-2xl font-bold text-emerald-400" id="monthly-required">$0</p>
+                    <p class="text-xs text-gray-400 mt-1" id="months-until">0 months to reach goal</p>
                 </div>
                 <div class="flex gap-3 pt-2">
                     <button onclick="closeSavingsGoalModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all">Cancel</button>
@@ -377,6 +397,42 @@
             </div>
         </div>
 
+        <!-- NEW: Savings Goal Calculator Section -->
+        <div id="savings-goal-section" class="mb-8 glass rounded-2xl p-6 border border-emerald-500/30 bg-emerald-900/5 slide-in hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                        <i class="fas fa-bullseye text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Savings Goal Tracker</h3>
+                        <p class="text-sm text-gray-400">Target: <span id="goal-target-display" class="text-emerald-400 font-semibold">$0</span> by <span id="goal-date-display" class="text-emerald-400 font-semibold">-</span></p>
+                    </div>
+                </div>
+                <button onclick="openSavingsGoalModal()" class="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition-all text-sm font-semibold">
+                    <i class="fas fa-edit mr-2"></i>Update Goal
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass rounded-xl p-4 text-center border border-white/5">
+                    <p class="text-xs text-gray-400 mb-1">Need to Save (Monthly)</p>
+                    <p class="text-2xl font-bold text-emerald-400" id="goal-monthly-need">$0</p>
+                    <p class="text-xs text-gray-500 mt-1">to reach target on time</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center border border-white/5">
+                    <p class="text-xs text-gray-400 mb-1">Current Progress</p>
+                    <p class="text-2xl font-bold text-white" id="goal-current-display">$0</p>
+                    <p class="text-xs text-gray-500 mt-1" id="goal-percent-display">0% complete</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center border border-white/5">
+                    <p class="text-xs text-gray-400 mb-1">Time Remaining</p>
+                    <p class="text-2xl font-bold text-indigo-400" id="goal-time-remaining">0 months</p>
+                    <p class="text-xs text-gray-500 mt-1">until deadline</p>
+                </div>
+            </div>
+        </div>
+
         <!-- AI Insights Panel -->
         <div class="mb-8 glass rounded-2xl p-6 border border-purple-500/30 slide-in">
             <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
@@ -388,6 +444,33 @@
                     <i class="fas fa-info-circle text-indigo-400 mt-1"></i>
                     <p class="text-sm text-gray-300">Start adding transactions to enable AI pattern detection and personalized recommendations.</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- NEW: Date Range Filter Bar -->
+        <div class="mb-6 glass rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 slide-in">
+            <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-calendar-range text-indigo-400"></i>
+                <span class="font-semibold">Monitor Period:</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 flex-1">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-400">From:</label>
+                    <input type="date" id="monitor-start-date" class="date-range-input">
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-400">To:</label>
+                    <input type="date" id="monitor-end-date" class="date-range-input">
+                </div>
+                <button onclick="applyDateFilter()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all">
+                    <i class="fas fa-filter mr-2"></i>Apply Filter
+                </button>
+                <button onclick="resetDateFilter()" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm transition-all">
+                    <i class="fas fa-undo mr-2"></i>Reset
+                </button>
+            </div>
+            <div class="text-xs text-gray-400" id="filtered-stats">
+                Showing all transactions
             </div>
         </div>
 
@@ -526,9 +609,12 @@
         let savingsChart = null;
         let monthlyBudget = 0;
         let budgetSpent = 0;
-        let savingsGoal = { amount: 0, deadline: null, dailyLimit: 0 };
+        let savingsGoal = { amount: 0, deadline: null, dailyLimit: 0, currentSavings: 0 };
         let alertShown = { eighty: false, breached: false };
         let transactionToDelete = null;
+        
+        // NEW: Date filter state
+        let dateFilter = { start: null, end: null };
         
         // AI State
         let aiPatterns = {
@@ -543,6 +629,11 @@
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('transaction-date');
             const savingsDateInput = document.getElementById('savings-date-input');
+            
+            // NEW: Initialize monitor date range
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            document.getElementById('monitor-start-date').value = thirtyDaysAgo;
+            document.getElementById('monitor-end-date').value = today;
             
             if (dateInput) {
                 dateInput.value = today;
@@ -583,6 +674,7 @@
             // Reverse the transaction effects
             if (transaction.type === 'income') {
                 savings -= transaction.amount;
+                savingsGoal.currentSavings -= transaction.amount;
             } else {
                 savings += transaction.amount;
                 budgetSpent -= transaction.amount;
@@ -597,6 +689,7 @@
             updateDailySpending();
             updateTransactionsUI();
             updateChartWithData();
+            updateSavingsGoalDisplay(); // NEW
             runAIAnalysis(); // Re-run AI without deleted transaction
             
             closeDeleteModal();
@@ -625,7 +718,11 @@
         }
 
         function analyzeSpendingPatterns() {
-            const expenses = transactions.filter(t => t.type === 'expense');
+            // NEW: Filter transactions by date range if set
+            let expenses = transactions.filter(t => t.type === 'expense');
+            if (dateFilter.start && dateFilter.end) {
+                expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
             
             // Category trends
             aiPatterns.categoryTrends = {};
@@ -660,7 +757,12 @@
         }
 
         function detectAnomalies() {
-            const expenses = transactions.filter(t => t.type === 'expense');
+            // NEW: Filter transactions by date range
+            let expenses = transactions.filter(t => t.type === 'expense');
+            if (dateFilter.start && dateFilter.end) {
+                expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
+            
             if (expenses.length < 3) return;
             
             // Calculate average and standard deviation
@@ -677,9 +779,12 @@
         }
 
         function generatePredictions() {
-            if (transactions.length < 5) return;
+            // NEW: Filter transactions by date range
+            let expenses = transactions.filter(t => t.type === 'expense');
+            if (dateFilter.start && dateFilter.end) {
+                expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
             
-            const expenses = transactions.filter(t => t.type === 'expense');
             const daysWithData = [...new Set(expenses.map(t => new Date(t.date).toDateString()))].length;
             
             if (daysWithData < 3) return;
@@ -700,7 +805,12 @@
 
         function generateAIInsights() {
             const insights = [];
-            const expenses = transactions.filter(t => t.type === 'expense');
+            
+            // NEW: Filter expenses by date range
+            let expenses = transactions.filter(t => t.type === 'expense');
+            if (dateFilter.start && dateFilter.end) {
+                expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
             
             // 1. Top spending category
             const topCategory = Object.entries(aiPatterns.categoryTrends)
@@ -773,8 +883,8 @@
             }
             
             // 6. Savings recommendation
-            if (savingsGoal.amount > 0 && savings < savingsGoal.amount) {
-                const remaining = savingsGoal.amount - savings;
+            if (savingsGoal.amount > 0 && savingsGoal.currentSavings < savingsGoal.amount) {
+                const remaining = savingsGoal.amount - savingsGoal.currentSavings;
                 const daysLeft = Math.max(1, Math.ceil((new Date(savingsGoal.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
                 const dailyNeeded = remaining / daysLeft;
                 
@@ -808,7 +918,11 @@
             const content = document.getElementById('ai-content');
             
             // Detailed AI report
-            const expenses = transactions.filter(t => t.type === 'expense');
+            // NEW: Filter by date range
+            let expenses = transactions.filter(t => t.type === 'expense');
+            if (dateFilter.start && dateFilter.end) {
+                expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
             const totalSpent = expenses.reduce((s, t) => s + t.amount, 0);
             
             let html = `
@@ -922,10 +1036,34 @@
         function openSavingsGoalModal() {
             document.getElementById('savings-goal-modal').classList.remove('hidden');
             document.getElementById('savings-goal-input').focus();
+            
+            // NEW: Add event listeners for real-time calculation
+            document.getElementById('savings-goal-input').addEventListener('input', updateMonthlyCalcPreview);
+            document.getElementById('savings-date-input').addEventListener('change', updateMonthlyCalcPreview);
+            updateMonthlyCalcPreview();
         }
 
         function closeSavingsGoalModal() {
             document.getElementById('savings-goal-modal').classList.add('hidden');
+        }
+        
+        // NEW: Real-time monthly calculation preview
+        function updateMonthlyCalcPreview() {
+            const amount = parseFloat(document.getElementById('savings-goal-input').value) || 0;
+            const deadline = document.getElementById('savings-date-input').value;
+            
+            if (amount > 0 && deadline) {
+                const today = new Date();
+                const targetDate = new Date(deadline);
+                const monthsLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24 * 30)));
+                const monthlyNeed = amount / monthsLeft;
+                
+                document.getElementById('monthly-calc-preview').classList.remove('hidden');
+                document.getElementById('monthly-required').textContent = `$${monthlyNeed.toFixed(2)}`;
+                document.getElementById('months-until').textContent = `${monthsLeft} month${monthsLeft !== 1 ? 's' : ''} to reach goal`;
+            } else {
+                document.getElementById('monthly-calc-preview').classList.add('hidden');
+            }
         }
 
         function setSavingsGoal() {
@@ -937,12 +1075,37 @@
                 return;
             }
             
-            savingsGoal = { amount, deadline, dailyLimit: 0 };
+            savingsGoal = { ...savingsGoal, amount, deadline, dailyLimit: 0 };
             calculateDailyLimit();
             updateSavingsDisplay();
+            updateSavingsGoalDisplay(); // NEW
             closeSavingsGoalModal();
             showNotification('Goal Set', `Save $${amount.toLocaleString()} by ${new Date(deadline).toLocaleDateString()}`, 'success');
             runAIAnalysis();
+        }
+
+        // NEW: Update savings goal section display
+        function updateSavingsGoalDisplay() {
+            if (savingsGoal.amount <= 0) {
+                document.getElementById('savings-goal-section').classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('savings-goal-section').classList.remove('hidden');
+            document.getElementById('goal-target-display').textContent = `$${savingsGoal.amount.toLocaleString()}`;
+            document.getElementById('goal-date-display').textContent = new Date(savingsGoal.deadline).toLocaleDateString();
+            document.getElementById('goal-current-display').textContent = `$${savingsGoal.currentSavings.toLocaleString()}`;
+            
+            const percentage = Math.min(100, Math.max(0, (savingsGoal.currentSavings / savingsGoal.amount) * 100));
+            document.getElementById('goal-percent-display').textContent = `${percentage.toFixed(1)}% complete`;
+            
+            const today = new Date();
+            const targetDate = new Date(savingsGoal.deadline);
+            const monthsLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24 * 30)));
+            const monthlyNeed = (savingsGoal.amount - savingsGoal.currentSavings) / monthsLeft;
+            
+            document.getElementById('goal-monthly-need').textContent = `$${monthlyNeed.toFixed(2)}`;
+            document.getElementById('goal-time-remaining').textContent = `${monthsLeft} month${monthsLeft !== 1 ? 's' : ''}`;
         }
 
         function calculateDailyLimit() {
@@ -971,9 +1134,15 @@
         }
 
         function updateDailySpending() {
+            // NEW: Filter by date range
+            let dailyTransactions = transactions.filter(t => t.type === 'expense');
+            if (dateFilter.start && dateFilter.end) {
+                dailyTransactions = dailyTransactions.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
+            
             const today = new Date().toDateString();
-            const spentToday = transactions
-                .filter(t => t.type === 'expense' && new Date(t.date).toDateString() === today)
+            const spentToday = dailyTransactions
+                .filter(t => new Date(t.date).toDateString() === today)
                 .reduce((sum, t) => sum + t.amount, 0);
             
             document.getElementById('spent-today').textContent = `$${spentToday.toFixed(2)}`;
@@ -1079,7 +1248,7 @@
             savingsEl.textContent = `$${savings.toLocaleString()}`;
             
             if (savingsGoal.amount > 0) {
-                const percent = Math.min((savings / savingsGoal.amount) * 100, 100);
+                const percent = Math.min((savingsGoal.currentSavings / savingsGoal.amount) * 100, 100);
                 goalText.textContent = `Goal: $${savingsGoal.amount.toLocaleString()} (${percent.toFixed(0)}%)`;
                 goalText.className = 'text-sm mt-1 ' + (percent >= 100 ? 'text-emerald-400 font-bold' : 'text-gray-400');
                 updateSavingsChart(percent);
@@ -1178,14 +1347,29 @@
 
         // Charts
         function updateChartWithData() {
+            // NEW: Filter by date range
+            let filteredTransactions = transactions;
+            if (dateFilter.start && dateFilter.end) {
+                filteredTransactions = transactions.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
+            
             const breakdown = {};
-            transactions.forEach(t => {
+            filteredTransactions.forEach(t => {
                 if (t.type === 'expense') {
                     breakdown[t.category] = (breakdown[t.category] || 0) + t.amount;
                 }
             });
             
-            if (Object.keys(breakdown).length === 0) return;
+            if (Object.keys(breakdown).length === 0) {
+                document.getElementById('chart-container').innerHTML = `
+                    <div class="empty-state text-center">
+                        <i class="fas fa-chart-pie text-4xl text-gray-600 mb-3"></i>
+                        <h4 class="text-lg font-semibold text-gray-400 mb-2">No data yet</h4>
+                        <p class="text-sm text-gray-500 mb-4">Add transactions to see analytics</p>
+                    </div>
+                `;
+                return;
+            }
             
             const chartContainer = document.getElementById('chart-container');
             chartContainer.innerHTML = '<canvas id="spendingChart"></canvas>';
@@ -1281,12 +1465,13 @@
                 merchant,
                 amount,
                 category,
-                date: transactionDate.toISOString(),
+                date: transactionDate.toISOString().split('T')[0],
                 type: currentTransactionType
             });
             
             if (isIncome) {
                 savings += amount;
+                savingsGoal.currentSavings += amount;
             } else {
                 savings -= amount;
                 budgetSpent += amount;
@@ -1297,6 +1482,7 @@
             updateDailySpending();
             updateTransactionsUI();
             updateChartWithData();
+            updateSavingsGoalDisplay(); // NEW
             runAIAnalysis();
             
             // Check daily limit breach
@@ -1324,7 +1510,14 @@
 
         function updateTransactionsUI() {
             const container = document.getElementById('recent-activity');
-            if (transactions.length === 0) {
+            
+            // NEW: Filter by date range
+            let filteredTransactions = transactions;
+            if (dateFilter.start && dateFilter.end) {
+                filteredTransactions = transactions.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
+            }
+            
+            if (filteredTransactions.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state py-8">
                         <i class="fas fa-receipt text-gray-600"></i>
@@ -1343,7 +1536,7 @@
                 entertainment: 'purple', bills: 'yellow', others: 'gray'
             };
             
-            container.innerHTML = transactions.slice(0, 10).map(t => {
+            container.innerHTML = filteredTransactions.slice(0, 10).map(t => {
                 const color = categoryColors[t.category];
                 const icon = categoryIcons[t.category];
                 const date = new Date(t.date);
@@ -1399,6 +1592,45 @@
             
             notif.classList.remove('hidden');
             setTimeout(() => notif.classList.add('hidden'), type === 'error' ? 5000 : 3000);
+        }
+
+        // NEW: Date range filter functions
+        function applyDateFilter() {
+            const start = document.getElementById('monitor-start-date').value;
+            const end = document.getElementById('monitor-end-date').value;
+            
+            if (!start || !end) {
+                showNotification('Error', 'Please select both start and end dates', 'error');
+                return;
+            }
+            
+            if (start > end) {
+                showNotification('Error', 'Start date cannot be after end date', 'error');
+                return;
+            }
+            
+            dateFilter = { start, end };
+            document.getElementById('filtered-stats').textContent = `Showing ${start} to ${end}`;
+            
+            updateTransactionsUI();
+            updateChartWithData();
+            runAIAnalysis();
+            updateDailySpending();
+            
+            showNotification('Filter Applied', `Showing transactions from ${start} to ${end}`, 'success');
+        }
+
+        function resetDateFilter() {
+            dateFilter = { start: null, end: null };
+            initDatePicker();
+            document.getElementById('filtered-stats').textContent = 'Showing all transactions';
+            
+            updateTransactionsUI();
+            updateChartWithData();
+            runAIAnalysis();
+            updateDailySpending();
+            
+            showNotification('Filter Reset', 'Showing all transactions', 'info');
         }
 
         // Load

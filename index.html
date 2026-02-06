@@ -86,7 +86,7 @@
         .prediction-up { color: #10b981; }
         .prediction-down { color: #ef4444; }
         
-        /* NEW: Date range styles */
+        /* Date range styles */
         .date-range-input {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -98,6 +98,40 @@
         .date-range-input:focus {
             outline: none;
             border-color: rgba(99, 102, 241, 0.5);
+        }
+        
+        /* Goal icon selector */
+        .goal-icon-option {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .goal-icon-option:hover {
+            transform: scale(1.1);
+            background: rgba(99, 102, 241, 0.2);
+        }
+        .goal-icon-option.selected {
+            background: rgba(99, 102, 241, 0.4);
+            border-color: #818cf8;
+        }
+        
+        /* Language selector */
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+        .lang-btn.active {
+            background: rgba(99, 102, 241, 0.3);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            color: #818cf8;
+        }
+        .lang-btn:not(.active) {
+            color: #9ca3af;
+        }
+        .lang-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
         }
     </style>
 </head>
@@ -123,30 +157,36 @@
                     <i class="fas fa-piggy-bank text-4xl"></i>
                 </div>
                 <h1 class="text-5xl font-bold mb-4 gradient-text">SmartSave AI</h1>
-                <p class="text-xl text-gray-300 mb-6">AI-powered spending analysis with pattern detection and smart predictions.</p>
+                <p class="text-xl text-gray-300 mb-6" data-i18n="tagline">AI-powered spending analysis with pattern detection and smart predictions.</p>
             </div>
             
             <div class="glass rounded-3xl p-8 border border-gray-700 shadow-2xl bg-slate-900/80">
+                <!-- Language Selector -->
+                <div class="flex justify-end mb-4 gap-2">
+                    <button onclick="setLanguage('en')" class="lang-btn active" id="lang-en">EN</button>
+                    <button onclick="setLanguage('pt')" class="lang-btn" id="lang-pt">PT</button>
+                </div>
+                
                 <div class="flex gap-4 mb-6">
-                    <button onclick="switchAuthMode('login')" id="tab-login" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-semibold transition-all">Login</button>
-                    <button onclick="switchAuthMode('register')" id="tab-register" class="flex-1 py-2 rounded-xl bg-gray-800 text-gray-400 font-semibold transition-all">Sign Up</button>
+                    <button onclick="switchAuthMode('login')" id="tab-login" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-semibold transition-all" data-i18n="login">Login</button>
+                    <button onclick="switchAuthMode('register')" id="tab-register" class="flex-1 py-2 rounded-xl bg-gray-800 text-gray-400 font-semibold transition-all" data-i18n="signup">Sign Up</button>
                 </div>
 
                 <form id="auth-form" class="space-y-4">
                     <div id="name-field" class="hidden">
-                        <label class="block text-sm text-gray-400 mb-2">Full Name</label>
+                        <label class="block text-sm text-gray-400 mb-2" data-i18n="fullName">Full Name</label>
                         <input type="text" id="user-name" class="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="John Doe">
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Email Address</label>
+                        <label class="block text-sm text-gray-400 mb-2" data-i18n="email">Email Address</label>
                         <input type="email" id="user-email" class="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="john@example.com" required>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Password</label>
+                        <label class="block text-sm text-gray-400 mb-2" data-i18n="password">Password</label>
                         <input type="password" id="user-password" class="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="••••••••" required>
                     </div>
                     <button type="submit" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold hover:shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-2">
-                        <span id="auth-btn-text">Login</span>
+                        <span id="auth-btn-text" data-i18n="login">Login</span>
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </form>
@@ -162,11 +202,11 @@
                 <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-trash-alt text-red-400 text-2xl"></i>
                 </div>
-                <h3 class="text-2xl font-bold mb-2">Delete Transaction?</h3>
-                <p class="text-gray-400 mb-6">This will remove the transaction and reverse its effect on your balance. This action cannot be undone.</p>
+                <h3 class="text-2xl font-bold mb-2" data-i18n="deleteConfirm">Delete Transaction?</h3>
+                <p class="text-gray-400 mb-6" data-i18n="deleteDesc">This will remove the transaction and reverse its effect on your balance. This action cannot be undone.</p>
                 <div class="flex gap-3">
-                    <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all">Cancel</button>
-                    <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-bold transition-all">Delete</button>
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all" data-i18n="cancel">Cancel</button>
+                    <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-bold transition-all" data-i18n="delete">Delete</button>
                 </div>
             </div>
         </div>
@@ -185,14 +225,20 @@
                         <i class="fas fa-robot ai-thinking"></i> AI Active
                     </span>
                 </div>
-                <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4">
+                    <!-- Language Toggle -->
+                    <div class="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
+                        <button onclick="setLanguage('en')" class="lang-btn px-2 py-1 text-xs" id="nav-lang-en">EN</button>
+                        <button onclick="setLanguage('pt')" class="lang-btn px-2 py-1 text-xs" id="nav-lang-pt">PT</button>
+                    </div>
+                    
                     <div class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/20 border border-orange-500/30">
                         <i class="fas fa-fire text-orange-500 streak-flame"></i>
                         <span class="font-bold text-orange-400" id="streak-display">0 Day Streak</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="openBankModal()" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition-all">
-                            <i class="fas fa-plus"></i> Add Bank
+                            <i class="fas fa-plus"></i> <span data-i18n="addBank">Add Bank</span>
                         </button>
                         
                         <div class="profile-menu-container">
@@ -201,16 +247,16 @@
                             </button>
                             <div class="profile-dropdown glass rounded-xl border border-gray-700 p-2 bg-slate-900">
                                 <button onclick="openBudgetModal()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 text-white flex items-center gap-2 mb-1">
-                                    <i class="fas fa-wallet text-blue-400"></i> Set Budget
+                                    <i class="fas fa-wallet text-blue-400"></i> <span data-i18n="setBudget">Set Budget</span>
                                 </button>
                                 <button onclick="openSavingsGoalModal()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 text-white flex items-center gap-2 mb-1">
-                                    <i class="fas fa-piggy-bank text-emerald-400"></i> Set Savings Goal
+                                    <i class="fas fa-piggy-bank text-emerald-400"></i> <span data-i18n="setSavingsGoal">Set Savings Goal</span>
                                 </button>
                                 <button onclick="showAIReport()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 text-white flex items-center gap-2 mb-1">
-                                    <i class="fas fa-brain text-purple-400"></i> AI Analysis
+                                    <i class="fas fa-brain text-purple-400"></i> <span data-i18n="aiAnalysis">AI Analysis</span>
                                 </button>
                                 <button onclick="logout()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-800 text-red-400 flex items-center gap-2">
-                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                    <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Logout</span>
                                 </button>
                             </div>
                         </div>
@@ -224,45 +270,83 @@
     <div id="budget-modal" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeBudgetModal()"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 glass rounded-2xl border border-gray-700 bg-slate-900">
-            <h3 class="text-2xl font-bold mb-2">Set Monthly Budget</h3>
-            <p class="text-gray-400 mb-4">AI will alert you at 80% and warn on breach</p>
+            <h3 class="text-2xl font-bold mb-2" data-i18n="setMonthlyBudget">Set Monthly Budget</h3>
+            <p class="text-gray-400 mb-4" data-i18n="aiWillAlert">AI will alert you at 80% and warn on breach</p>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Monthly Budget ($)</label>
-                    <input type="number" id="budget-input" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="2000" min="1">
+                    <label class="block text-sm text-gray-400 mb-2" data-i18n="monthlyBudget">Monthly Budget</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 currency-symbol">R$</span>
+                        <input type="number" id="budget-input" class="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="2000" min="1">
+                    </div>
                 </div>
                 <div class="flex gap-3 pt-2">
-                    <button onclick="closeBudgetModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all">Cancel</button>
-                    <button onclick="setBudget()" class="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold hover:shadow-lg transition-all">Set Budget</button>
+                    <button onclick="closeBudgetModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all" data-i18n="cancel">Cancel</button>
+                    <button onclick="setBudget()" class="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold hover:shadow-lg transition-all" data-i18n="setBudget">Set Budget</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Savings Goal Modal -->
+    <!-- Enhanced Savings Goal Modal -->
     <div id="savings-goal-modal" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeSavingsGoalModal()"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 glass rounded-2xl border border-gray-700 bg-slate-900">
-            <h3 class="text-2xl font-bold mb-2">Set Savings Target</h3>
-            <p class="text-gray-400 mb-4">AI will calculate optimal daily spending</p>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg p-6 glass rounded-2xl border border-gray-700 bg-slate-900 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-2" data-i18n="setSavingsTarget">Set Savings Target</h3>
+            <p class="text-gray-400 mb-4" data-i18n="aiWillCalculate">AI will calculate optimal monthly savings</p>
             <div class="space-y-4">
+                <!-- Goal Name -->
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Target Savings ($)</label>
-                    <input type="number" id="savings-goal-input" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="500" min="1">
+                    <label class="block text-sm text-gray-400 mb-2" data-i18n="goalName">Goal Name</label>
+                    <input type="text" id="savings-goal-name" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="e.g., Trip to Japan">
+                </div>
+                
+                <!-- Goal Description -->
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2" data-i18n="goalDescription">Description (Optional)</label>
+                    <textarea id="savings-goal-desc" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 resize-none" placeholder="Dream vacation with friends..."></textarea>
+                </div>
+                
+                <!-- Icon Selector -->
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2" data-i18n="chooseIcon">Choose Icon</label>
+                    <div class="grid grid-cols-6 gap-2" id="goal-icon-selector">
+                        <div class="goal-icon-option selected w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-plane" onclick="selectGoalIcon(this)">✈️</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-shopping-bag" onclick="selectGoalIcon(this)">🛍️</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-car" onclick="selectGoalIcon(this)">🚗</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-home" onclick="selectGoalIcon(this)">🏠</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-graduation-cap" onclick="selectGoalIcon(this)">🎓</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-heart" onclick="selectGoalIcon(this)">❤️</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-gamepad" onclick="selectGoalIcon(this)">🎮</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-laptop" onclick="selectGoalIcon(this)">💻</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-bicycle" onclick="selectGoalIcon(this)">🚲</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-camera" onclick="selectGoalIcon(this)">📷</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-gift" onclick="selectGoalIcon(this)">🎁</div>
+                        <div class="goal-icon-option w-10 h-10 rounded-lg border border-gray-600 flex items-center justify-center text-xl" data-icon="fa-piggy-bank" onclick="selectGoalIcon(this)">🐷</div>
+                    </div>
+                    <input type="hidden" id="selected-goal-icon" value="fa-plane">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2" data-i18n="targetSavings">Target Savings</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 currency-symbol">R$</span>
+                        <input type="number" id="savings-goal-input" class="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="5000" min="1">
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Target Date</label>
+                    <label class="block text-sm text-gray-400 mb-2" data-i18n="targetDate">Target Date</label>
                     <input type="date" id="savings-date-input" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500">
                 </div>
-                <!-- NEW: Monthly calculation preview -->
+                <!-- Monthly calculation preview -->
                 <div id="monthly-calc-preview" class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hidden">
-                    <p class="text-sm text-emerald-300 mb-1">Required Monthly Savings:</p>
-                    <p class="text-2xl font-bold text-emerald-400" id="monthly-required">$0</p>
+                    <p class="text-sm text-emerald-300 mb-1" data-i18n="requiredMonthlySavings">Required Monthly Savings:</p>
+                    <p class="text-2xl font-bold text-emerald-400" id="monthly-required">R$ 0</p>
                     <p class="text-xs text-gray-400 mt-1" id="months-until">0 months to reach goal</p>
                 </div>
                 <div class="flex gap-3 pt-2">
-                    <button onclick="closeSavingsGoalModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all">Cancel</button>
-                    <button onclick="setSavingsGoal()" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold hover:shadow-lg transition-all">Set Goal</button>
+                    <button onclick="closeSavingsGoalModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all" data-i18n="cancel">Cancel</button>
+                    <button onclick="setSavingsGoal()" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold hover:shadow-lg transition-all" data-i18n="setGoal">Set Goal</button>
                 </div>
             </div>
         </div>
@@ -278,8 +362,8 @@
                         <i class="fas fa-brain text-2xl"></i>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-bold">AI Spending Analysis</h3>
-                        <p class="text-sm text-gray-400">Pattern detection & behavioral insights</p>
+                        <h3 class="text-2xl font-bold" data-i18n="aiSpendingAnalysis">AI Spending Analysis</h3>
+                        <p class="text-sm text-gray-400" data-i18n="patternDetection">Pattern detection & behavioral insights</p>
                     </div>
                 </div>
                 <button onclick="closeAIModal()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center">
@@ -322,14 +406,14 @@
                         <i class="fas fa-calculator text-indigo-400 text-xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-400">AI Recommended Daily Limit</p>
-                        <h3 class="text-2xl font-bold text-indigo-400" id="daily-limit-amount">$0</h3>
+                        <p class="text-sm text-gray-400" data-i18n="aiDailyLimit">AI Recommended Daily Limit</p>
+                        <h3 class="text-2xl font-bold text-indigo-400" id="daily-limit-amount">R$ 0</h3>
                         <p class="text-xs text-gray-500" id="days-remaining">to reach your goal</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-sm text-gray-400">Spent Today</p>
-                    <h3 class="text-2xl font-bold" id="spent-today">$0</h3>
+                    <p class="text-sm text-gray-400" data-i18n="spentToday">Spent Today</p>
+                    <h3 class="text-2xl font-bold" id="spent-today">R$ 0</h3>
                     <p class="text-xs" id="daily-status">On track</p>
                 </div>
             </div>
@@ -337,8 +421,8 @@
 
         <!-- Welcome -->
         <div class="mb-8 text-center slide-in">
-            <h1 class="text-4xl md:text-5xl font-bold mb-2">Welcome, <span class="gradient-text" id="display-name">Saver</span>! 🎉</h1>
-            <p class="text-gray-400 text-lg" id="smart-subtitle">AI is monitoring your spending patterns</p>
+            <h1 class="text-4xl md:text-5xl font-bold mb-2"><span data-i18n="welcome">Welcome</span>, <span class="gradient-text" id="display-name">Saver</span>! 🎉</h1>
+            <p class="text-gray-400 text-lg" id="smart-subtitle" data-i18n="aiMonitoring">AI is monitoring your spending patterns</p>
         </div>
 
         <!-- Stats Grid -->
@@ -347,8 +431,8 @@
             <div class="glass rounded-2xl p-6 card-hover relative overflow-hidden lg:col-span-2">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-gray-400 text-sm mb-1">Total Savings</p>
-                        <h3 class="text-3xl font-bold text-emerald-400" id="total-savings">$0</h3>
+                        <p class="text-gray-400 text-sm mb-1" data-i18n="totalSavings">Total Savings</p>
+                        <h3 class="text-3xl font-bold text-emerald-400" id="total-savings">R$ 0</h3>
                         <p class="text-sm mt-1" id="savings-goal-text">Goal: Not set</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
@@ -357,7 +441,7 @@
                 </div>
                 <div class="h-24 mt-4" id="savings-chart-container">
                     <div class="empty-state h-full flex items-center justify-center">
-                        <p class="text-xs text-gray-500">Set a savings goal to see progress</p>
+                        <p class="text-xs text-gray-500" data-i18n="setGoalToSee">Set a savings goal to see progress</p>
                     </div>
                 </div>
             </div>
@@ -366,8 +450,8 @@
             <div class="glass rounded-2xl p-6 card-hover relative overflow-hidden cursor-pointer" onclick="openBudgetModal()" id="budget-card">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-gray-400 text-sm mb-1">Monthly Budget</p>
-                        <h3 class="text-3xl font-bold text-blue-400" id="monthly-budget">Set Budget</h3>
+                        <p class="text-gray-400 text-sm mb-1" data-i18n="monthlyBudget">Monthly Budget</p>
+                        <h3 class="text-3xl font-bold text-blue-400" id="monthly-budget" data-i18n="setBudgetBtn">Set Budget</h3>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
                         <i class="fas fa-calendar-alt text-blue-400 text-xl"></i>
@@ -376,14 +460,14 @@
                 <div class="w-full bg-gray-700 rounded-full h-3 mt-2 overflow-hidden">
                     <div class="bg-gray-600 h-3 rounded-full transition-all duration-500" style="width: 0%" id="budget-progress"></div>
                 </div>
-                <p class="text-xs text-gray-400 mt-2" id="budget-text">Click to set budget</p>
+                <p class="text-xs text-gray-400 mt-2" id="budget-text" data-i18n="clickToSet">Click to set budget</p>
             </div>
 
             <!-- Streak -->
             <div class="glass rounded-2xl p-6 card-hover relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-gray-400 text-sm mb-1">Current Streak</p>
+                        <p class="text-gray-400 text-sm mb-1" data-i18n="currentStreak">Current Streak</p>
                         <h3 class="text-3xl font-bold text-orange-400 flex items-center gap-2">
                             <span id="streak-count">0</span>
                             <i class="fas fa-fire text-2xl opacity-30"></i>
@@ -393,42 +477,59 @@
                         <i class="fas fa-trophy text-orange-400 text-xl"></i>
                     </div>
                 </div>
-                <p class="text-sm text-gray-400">Keep logging daily!</p>
+                <p class="text-sm text-gray-400" data-i18n="keepLogging">Keep logging daily!</p>
             </div>
         </div>
 
-        <!-- NEW: Savings Goal Calculator Section -->
+        <!-- Enhanced Savings Goal Tracker Section -->
         <div id="savings-goal-section" class="mb-8 glass rounded-2xl p-6 border border-emerald-500/30 bg-emerald-900/5 slide-in hidden">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                        <i class="fas fa-bullseye text-white text-xl"></i>
+                <div class="flex items-center gap-4">
+                    <div id="goal-icon-display" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/20">
+                        ✈️
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-white">Savings Goal Tracker</h3>
-                        <p class="text-sm text-gray-400">Target: <span id="goal-target-display" class="text-emerald-400 font-semibold">$0</span> by <span id="goal-date-display" class="text-emerald-400 font-semibold">-</span></p>
+                        <h3 class="text-2xl font-bold text-white" id="goal-name-display">Trip to Japan</h3>
+                        <p class="text-sm text-gray-400" id="goal-desc-display">Dream vacation with friends</p>
+                        <p class="text-xs text-emerald-400 mt-1">
+                            <span data-i18n="target">Target</span>: <span id="goal-target-display" class="font-semibold">R$ 0</span> 
+                            <span data-i18n="by">by</span> <span id="goal-date-display" class="font-semibold">-</span>
+                        </p>
                     </div>
                 </div>
                 <button onclick="openSavingsGoalModal()" class="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition-all text-sm font-semibold">
-                    <i class="fas fa-edit mr-2"></i>Update Goal
+                    <i class="fas fa-edit mr-2"></i><span data-i18n="editGoal">Edit Goal</span>
                 </button>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-400" data-i18n="progress">Progress</span>
+                    <span class="text-emerald-400 font-bold" id="goal-progress-text">0%</span>
+                </div>
+                <div class="w-full bg-gray-700/50 rounded-full h-4 overflow-hidden">
+                    <div id="goal-progress-bar-main" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-4 rounded-full transition-all duration-1000 relative" style="width: 0%">
+                        <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="glass rounded-xl p-4 text-center border border-white/5">
-                    <p class="text-xs text-gray-400 mb-1">Need to Save (Monthly)</p>
-                    <p class="text-2xl font-bold text-emerald-400" id="goal-monthly-need">$0</p>
-                    <p class="text-xs text-gray-500 mt-1">to reach target on time</p>
+                    <p class="text-xs text-gray-400 mb-1" data-i18n="monthlyNeed">Monthly Need</p>
+                    <p class="text-2xl font-bold text-emerald-400" id="goal-monthly-need">R$ 0</p>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="toReachTarget">to reach target</p>
                 </div>
                 <div class="glass rounded-xl p-4 text-center border border-white/5">
-                    <p class="text-xs text-gray-400 mb-1">Current Progress</p>
-                    <p class="text-2xl font-bold text-white" id="goal-current-display">$0</p>
-                    <p class="text-xs text-gray-500 mt-1" id="goal-percent-display">0% complete</p>
+                    <p class="text-xs text-gray-400 mb-1" data-i18n="savedSoFar">Saved So Far</p>
+                    <p class="text-2xl font-bold text-white" id="goal-current-display">R$ 0</p>
+                    <p class="text-xs text-gray-500 mt-1" id="goal-amount-remaining">R$ 0 remaining</p>
                 </div>
                 <div class="glass rounded-xl p-4 text-center border border-white/5">
-                    <p class="text-xs text-gray-400 mb-1">Time Remaining</p>
+                    <p class="text-xs text-gray-400 mb-1" data-i18n="timeLeft">Time Left</p>
                     <p class="text-2xl font-bold text-indigo-400" id="goal-time-remaining">0 months</p>
-                    <p class="text-xs text-gray-500 mt-1">until deadline</p>
+                    <p class="text-xs text-gray-500 mt-1" id="goal-deadline-days">0 days</p>
                 </div>
             </div>
         </div>
@@ -437,39 +538,39 @@
         <div class="mb-8 glass rounded-2xl p-6 border border-purple-500/30 slide-in">
             <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
                 <i class="fas fa-robot text-purple-400"></i>
-                AI Insights & Recommendations
+                <span data-i18n="aiInsights">AI Insights & Recommendations</span>
             </h3>
             <div id="ai-insights-container" class="space-y-3">
                 <div class="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3">
                     <i class="fas fa-info-circle text-indigo-400 mt-1"></i>
-                    <p class="text-sm text-gray-300">Start adding transactions to enable AI pattern detection and personalized recommendations.</p>
+                    <p class="text-sm text-gray-300" data-i18n="startAdding">Start adding transactions to enable AI pattern detection and personalized recommendations.</p>
                 </div>
             </div>
         </div>
 
-        <!-- NEW: Date Range Filter Bar -->
+        <!-- Date Range Filter Bar -->
         <div class="mb-6 glass rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 slide-in">
             <div class="flex items-center gap-2 text-gray-300">
                 <i class="fas fa-calendar-range text-indigo-400"></i>
-                <span class="font-semibold">Monitor Period:</span>
+                <span class="font-semibold" data-i18n="monitorPeriod">Monitor Period:</span>
             </div>
             <div class="flex flex-wrap items-center gap-3 flex-1">
                 <div class="flex items-center gap-2">
-                    <label class="text-xs text-gray-400">From:</label>
+                    <label class="text-xs text-gray-400" data-i18n="from">From:</label>
                     <input type="date" id="monitor-start-date" class="date-range-input">
                 </div>
                 <div class="flex items-center gap-2">
-                    <label class="text-xs text-gray-400">To:</label>
+                    <label class="text-xs text-gray-400" data-i18n="to">To:</label>
                     <input type="date" id="monitor-end-date" class="date-range-input">
                 </div>
                 <button onclick="applyDateFilter()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all">
-                    <i class="fas fa-filter mr-2"></i>Apply Filter
+                    <i class="fas fa-filter mr-2"></i><span data-i18n="apply">Apply</span>
                 </button>
                 <button onclick="resetDateFilter()" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm transition-all">
-                    <i class="fas fa-undo mr-2"></i>Reset
+                    <i class="fas fa-undo mr-2"></i><span data-i18n="reset">Reset</span>
                 </button>
             </div>
-            <div class="text-xs text-gray-400" id="filtered-stats">
+            <div class="text-xs text-gray-400" id="filtered-stats" data-i18n="showingAll">
                 Showing all transactions
             </div>
         </div>
@@ -485,10 +586,10 @@
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-xl font-bold flex items-center gap-2">
                             <i class="fas fa-chart-pie text-indigo-400"></i>
-                            Spending Analytics
+                            <span data-i18n="spendingAnalytics">Spending Analytics</span>
                         </h3>
                         <button onclick="showAIReport()" class="text-sm px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all">
-                            <i class="fas fa-brain mr-1"></i> AI Analysis
+                            <i class="fas fa-brain mr-1"></i> <span data-i18n="aiAnalysis">AI Analysis</span>
                         </button>
                     </div>
                     
@@ -497,8 +598,8 @@
                             <div id="chart-container" class="h-full flex items-center justify-center">
                                 <div class="empty-state text-center">
                                     <i class="fas fa-chart-pie text-4xl text-gray-600 mb-3"></i>
-                                    <h4 class="text-lg font-semibold text-gray-400 mb-2">No data yet</h4>
-                                    <p class="text-sm text-gray-500 mb-4">Add transactions to see analytics</p>
+                                    <h4 class="text-lg font-semibold text-gray-400 mb-2" data-i18n="noData">No data yet</h4>
+                                    <p class="text-sm text-gray-500 mb-4" data-i18n="addTransactions">Add transactions to see analytics</p>
                                 </div>
                             </div>
                         </div>
@@ -506,7 +607,7 @@
                         <div class="space-y-4" id="category-breakdown">
                             <div class="empty-state text-center h-full flex flex-col items-center justify-center">
                                 <i class="fas fa-list text-4xl text-gray-600 mb-3"></i>
-                                <p class="text-sm text-gray-500">Categories will appear here</p>
+                                <p class="text-sm text-gray-500" data-i18n="categoriesAppear">Categories will appear here</p>
                             </div>
                         </div>
                     </div>
@@ -520,44 +621,44 @@
                 <div class="glass rounded-2xl p-6 slide-in">
                     <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
                         <i class="fas fa-plus-circle text-emerald-400"></i>
-                        Quick Add
+                        <span data-i18n="quickAdd">Quick Add</span>
                     </h3>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm text-gray-400 mb-2">Amount</label>
+                            <label class="block text-sm text-gray-400 mb-2" data-i18n="amount">Amount</label>
                             <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                                <input type="number" id="transaction-amount" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-8 py-3 focus:outline-none focus:border-emerald-500 transition-colors" placeholder="0.00" step="0.01">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 currency-symbol">R$</span>
+                                <input type="number" id="transaction-amount" class="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors" placeholder="0,00" step="0.01">
                             </div>
                         </div>
                         
                         <div>
-                            <label class="block text-sm text-gray-400 mb-2">Date</label>
+                            <label class="block text-sm text-gray-400 mb-2" data-i18n="date">Date</label>
                             <input type="date" id="transaction-date" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors text-white">
                         </div>
                         
                         <div>
-                            <label class="block text-sm text-gray-400 mb-2">Category</label>
+                            <label class="block text-sm text-gray-400 mb-2" data-i18n="category">Category</label>
                             <select id="transaction-category" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors">
-                                <option value="food">🍔 Food & Dining</option>
-                                <option value="shopping">🛍️ Shopping</option>
-                                <option value="transport">🚗 Transport</option>
-                                <option value="entertainment">🎬 Entertainment</option>
-                                <option value="bills">💡 Bills</option>
-                                <option value="income">💰 Income</option>
+                                <option value="food">🍔 <span data-i18n="food">Food & Dining</span></option>
+                                <option value="shopping">🛍️ <span data-i18n="shopping">Shopping</span></option>
+                                <option value="transport">🚗 <span data-i18n="transport">Transport</span></option>
+                                <option value="entertainment">🎬 <span data-i18n="entertainment">Entertainment</span></option>
+                                <option value="bills">💡 <span data-i18n="bills">Bills</span></option>
+                                <option value="income">💰 <span data-i18n="income">Income</span></option>
                             </select>
                         </div>
                         
                         <div>
-                            <label class="block text-sm text-gray-400 mb-2">Type</label>
+                            <label class="block text-sm text-gray-400 mb-2" data-i18n="type">Type</label>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setTransactionType('expense')" id="btn-expense" class="py-2 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 font-semibold transition-all">Expense</button>
-                                <button onclick="setTransactionType('income')" id="btn-income" class="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all">Income</button>
+                                <button onclick="setTransactionType('expense')" id="btn-expense" class="py-2 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 font-semibold transition-all" data-i18n="expense">Expense</button>
+                                <button onclick="setTransactionType('income')" id="btn-income" class="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all" data-i18n="incomeBtn">Income</button>
                             </div>
                         </div>
                         
                         <button onclick="addTransaction()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
-                            <i class="fas fa-check"></i> Add Transaction
+                            <i class="fas fa-check"></i> <span data-i18n="addTransaction">Add Transaction</span>
                         </button>
                     </div>
                 </div>
@@ -567,14 +668,14 @@
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold flex items-center gap-2">
                             <i class="fas fa-history text-blue-400"></i>
-                            Recent Activity
+                            <span data-i18n="recentActivity">Recent Activity</span>
                         </h3>
-                        <span class="text-xs text-gray-500">Swipe to delete</span>
+                        <span class="text-xs text-gray-500" data-i18n="swipeToDelete">Swipe to delete</span>
                     </div>
                     <div id="recent-activity" class="space-y-3">
                         <div class="empty-state py-8">
                             <i class="fas fa-receipt text-gray-600"></i>
-                            <p class="text-sm text-gray-500">No transactions yet</p>
+                            <p class="text-sm text-gray-500" data-i18n="noTransactions">No transactions yet</p>
                         </div>
                     </div>
                 </div>
@@ -596,9 +697,203 @@
     </div>
 
     <script>
+        // Translations
+        const translations = {
+            en: {
+                tagline: "AI-powered spending analysis with pattern detection and smart predictions.",
+                login: "Login",
+                signup: "Sign Up",
+                fullName: "Full Name",
+                email: "Email Address",
+                password: "Password",
+                deleteConfirm: "Delete Transaction?",
+                deleteDesc: "This will remove the transaction and reverse its effect on your balance. This action cannot be undone.",
+                cancel: "Cancel",
+                delete: "Delete",
+                addBank: "Add Bank",
+                setBudget: "Set Budget",
+                setSavingsGoal: "Set Savings Goal",
+                aiAnalysis: "AI Analysis",
+                logout: "Logout",
+                setMonthlyBudget: "Set Monthly Budget",
+                aiWillAlert: "AI will alert you at 80% and warn on breach",
+                monthlyBudget: "Monthly Budget",
+                setSavingsTarget: "Set Savings Target",
+                aiWillCalculate: "AI will calculate optimal monthly savings",
+                goalName: "Goal Name",
+                goalDescription: "Description (Optional)",
+                chooseIcon: "Choose Icon",
+                targetSavings: "Target Savings",
+                targetDate: "Target Date",
+                requiredMonthlySavings: "Required Monthly Savings:",
+                setGoal: "Set Goal",
+                aiSpendingAnalysis: "AI Spending Analysis",
+                patternDetection: "Pattern detection & behavioral insights",
+                welcome: "Welcome",
+                aiMonitoring: "AI is monitoring your spending patterns",
+                totalSavings: "Total Savings",
+                setGoalToSee: "Set a savings goal to see progress",
+                setBudgetBtn: "Set Budget",
+                clickToSet: "Click to set budget",
+                currentStreak: "Current Streak",
+                keepLogging: "Keep logging daily!",
+                target: "Target",
+                by: "by",
+                editGoal: "Edit Goal",
+                progress: "Progress",
+                monthlyNeed: "Monthly Need",
+                toReachTarget: "to reach target",
+                savedSoFar: "Saved So Far",
+                timeLeft: "Time Left",
+                aiInsights: "AI Insights & Recommendations",
+                startAdding: "Start adding transactions to enable AI pattern detection and personalized recommendations.",
+                monitorPeriod: "Monitor Period:",
+                from: "From:",
+                to: "To:",
+                apply: "Apply",
+                reset: "Reset",
+                showingAll: "Showing all transactions",
+                spendingAnalytics: "Spending Analytics",
+                noData: "No data yet",
+                addTransactions: "Add transactions to see analytics",
+                categoriesAppear: "Categories will appear here",
+                quickAdd: "Quick Add",
+                amount: "Amount",
+                date: "Date",
+                category: "Category",
+                food: "Food & Dining",
+                shopping: "Shopping",
+                transport: "Transport",
+                entertainment: "Entertainment",
+                bills: "Bills",
+                income: "Income",
+                type: "Type",
+                expense: "Expense",
+                incomeBtn: "Income",
+                addTransaction: "Add Transaction",
+                recentActivity: "Recent Activity",
+                swipeToDelete: "Swipe to delete",
+                noTransactions: "No transactions yet",
+                aiDailyLimit: "AI Recommended Daily Limit",
+                spentToday: "Spent Today"
+            },
+            pt: {
+                tagline: "Análise de gastos com IA, detecção de padrões e previsões inteligentes.",
+                login: "Entrar",
+                signup: "Cadastrar",
+                fullName: "Nome Completo",
+                email: "E-mail",
+                password: "Senha",
+                deleteConfirm: "Excluir Transação?",
+                deleteDesc: "Isso removerá a transação e reverterá seu efeito no saldo. Esta ação não pode ser desfeita.",
+                cancel: "Cancelar",
+                delete: "Excluir",
+                addBank: "Adicionar Banco",
+                setBudget: "Definir Orçamento",
+                setSavingsGoal: "Definir Meta de Economia",
+                aiAnalysis: "Análise de IA",
+                logout: "Sair",
+                setMonthlyBudget: "Definir Orçamento Mensal",
+                aiWillAlert: "A IA alertará em 80% e avisará se ultrapassar",
+                monthlyBudget: "Orçamento Mensal",
+                setSavingsTarget: "Definir Meta de Economia",
+                aiWillCalculate: "A IA calculará a economia mensal ideal",
+                goalName: "Nome da Meta",
+                goalDescription: "Descrição (Opcional)",
+                chooseIcon: "Escolher Ícone",
+                targetSavings: "Meta de Economia",
+                targetDate: "Data Alvo",
+                requiredMonthlySavings: "Economia Mensal Necessária:",
+                setGoal: "Definir Meta",
+                aiSpendingAnalysis: "Análise de Gastos com IA",
+                patternDetection: "Detecção de padrões e insights comportamentais",
+                welcome: "Bem-vindo",
+                aiMonitoring: "A IA está monitorando seus padrões de gastos",
+                totalSavings: "Economia Total",
+                setGoalToSee: "Defina uma meta para ver o progresso",
+                setBudgetBtn: "Definir Orçamento",
+                clickToSet: "Clique para definir orçamento",
+                currentStreak: "Sequência Atual",
+                keepLogging: "Continue registrando diariamente!",
+                target: "Meta",
+                by: "até",
+                editGoal: "Editar Meta",
+                progress: "Progresso",
+                monthlyNeed: "Necessidade Mensal",
+                toReachTarget: "para atingir a meta",
+                savedSoFar: "Economizado Até Agora",
+                timeLeft: "Tempo Restante",
+                aiInsights: "Insights e Recomendações da IA",
+                startAdding: "Comece a adicionar transações para habilitar a detecção de padrões e recomendações personalizadas.",
+                monitorPeriod: "Período de Monitoramento:",
+                from: "De:",
+                to: "Até:",
+                apply: "Aplicar",
+                reset: "Limpar",
+                showingAll: "Mostrando todas as transações",
+                spendingAnalytics: "Análise de Gastos",
+                noData: "Sem dados ainda",
+                addTransactions: "Adicione transações para ver a análise",
+                categoriesAppear: "Categorias aparecerão aqui",
+                quickAdd: "Adição Rápida",
+                amount: "Valor",
+                date: "Data",
+                category: "Categoria",
+                food: "Comida & Restaurantes",
+                shopping: "Compras",
+                transport: "Transporte",
+                entertainment: "Entretenimento",
+                bills: "Contas",
+                income: "Receita",
+                type: "Tipo",
+                expense: "Despesa",
+                incomeBtn: "Receita",
+                addTransaction: "Adicionar Transação",
+                recentActivity: "Atividade Recente",
+                swipeToDelete: "Deslize para excluir",
+                noTransactions: "Nenhuma transação ainda",
+                aiDailyLimit: "Limite Diário Recomendado pela IA",
+                spentToday: "Gasto Hoje"
+            }
+        };
+
+        let currentLanguage = 'en';
+        let currentCurrency = 'BRL';
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`lang-${lang}`)?.classList.add('active');
+            document.getElementById(`nav-lang-${lang}`)?.classList.add('active');
+            
+            // Update all elements with data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            // Update placeholders
+            const nameInput = document.getElementById('user-name');
+            const goalNameInput = document.getElementById('savings-goal-name');
+            const goalDescInput = document.getElementById('savings-goal-desc');
+            
+            if (nameInput) nameInput.placeholder = lang === 'pt' ? 'João Silva' : 'John Doe';
+            if (goalNameInput) goalNameInput.placeholder = lang === 'pt' ? 'Ex: Viagem para o Japão' : 'e.g., Trip to Japan';
+            if (goalDescInput) goalDescInput.placeholder = lang === 'pt' ? 'Férias dos sonhos com amigos...' : 'Dream vacation with friends...';
+            
+            // Refresh displays
+            updateAllDisplays();
+        }
+
         // State
         let currentTransactionType = 'expense';
-        let selectedIcon = '✈️';
+        let selectedIcon = 'fa-plane';
         let streakCount = 0;
         let savings = 0;
         let currentUser = null;
@@ -609,14 +904,19 @@
         let savingsChart = null;
         let monthlyBudget = 0;
         let budgetSpent = 0;
-        let savingsGoal = { amount: 0, deadline: null, dailyLimit: 0, currentSavings: 0 };
+        let savingsGoal = { 
+            amount: 0, 
+            deadline: null, 
+            dailyLimit: 0, 
+            currentSavings: 0,
+            name: '',
+            description: '',
+            icon: 'fa-plane'
+        };
         let alertShown = { eighty: false, breached: false };
         let transactionToDelete = null;
-        
-        // NEW: Date filter state
         let dateFilter = { start: null, end: null };
         
-        // AI State
         let aiPatterns = {
             spendingVelocity: [],
             categoryTrends: {},
@@ -625,12 +925,27 @@
             predictions: {}
         };
 
+        function formatMoney(amount) {
+            if (currentCurrency === 'BRL') {
+                return 'R$ ' + amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function updateAllDisplays() {
+            updateSavingsDisplay();
+            updateBudgetDisplay();
+            updateDailySpending();
+            updateSavingsGoalDisplay();
+            updateTransactionsUI();
+            updateChartWithData();
+        }
+
         function initDatePicker() {
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('transaction-date');
             const savingsDateInput = document.getElementById('savings-date-input');
             
-            // NEW: Initialize monitor date range
             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             document.getElementById('monitor-start-date').value = thirtyDaysAgo;
             document.getElementById('monitor-end-date').value = today;
@@ -641,12 +956,20 @@
             }
             
             if (savingsDateInput) {
-                const lastDay = new Date();
-                lastDay.setMonth(lastDay.getMonth() + 1);
-                lastDay.setDate(0);
-                savingsDateInput.value = lastDay.toISOString().split('T')[0];
+                const sixMonths = new Date();
+                sixMonths.setMonth(sixMonths.getMonth() + 6);
+                savingsDateInput.value = sixMonths.toISOString().split('T')[0];
                 savingsDateInput.min = today;
             }
+        }
+
+        // Goal Icon Selection
+        function selectGoalIcon(element) {
+            document.querySelectorAll('.goal-icon-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            document.getElementById('selected-goal-icon').value = element.dataset.icon;
         }
 
         // Delete Functions
@@ -671,7 +994,6 @@
             
             const transaction = transactions[index];
             
-            // Reverse the transaction effects
             if (transaction.type === 'income') {
                 savings -= transaction.amount;
                 savingsGoal.currentSavings -= transaction.amount;
@@ -680,37 +1002,31 @@
                 budgetSpent -= transaction.amount;
             }
             
-            // Remove from array
             transactions.splice(index, 1);
             
-            // Update all displays
-            updateSavingsDisplay();
-            updateBudgetDisplay();
-            updateDailySpending();
-            updateTransactionsUI();
-            updateChartWithData();
-            updateSavingsGoalDisplay(); // NEW
-            runAIAnalysis(); // Re-run AI without deleted transaction
+            updateAllDisplays();
+            runAIAnalysis();
             
             closeDeleteModal();
-            showNotification('Deleted', 'Transaction removed and balance corrected', 'success');
+            showNotification(currentLanguage === 'pt' ? 'Excluído' : 'Deleted', currentLanguage === 'pt' ? 'Transação removida' : 'Transaction removed', 'success');
         }
 
         // AI Analysis System
         function runAIAnalysis() {
             if (transactions.length < 3) {
+                const msg = currentLanguage === 'pt' 
+                    ? 'Adicione pelo menos 3 transações para habilitar a detecção de padrões.' 
+                    : 'Add at least 3 transactions for AI pattern detection.';
                 document.getElementById('ai-insights-container').innerHTML = `
                     <div class="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3">
                         <i class="fas fa-info-circle text-indigo-400 mt-1"></i>
-                        <p class="text-sm text-gray-300">Add at least 3 transactions for AI pattern detection.</p>
+                        <p class="text-sm text-gray-300">${msg}</p>
                     </div>
                 `;
                 return;
             }
 
             document.getElementById('ai-status').classList.remove('hidden');
-            
-            // Analyze patterns
             analyzeSpendingPatterns();
             detectAnomalies();
             generatePredictions();
@@ -718,13 +1034,11 @@
         }
 
         function analyzeSpendingPatterns() {
-            // NEW: Filter transactions by date range if set
             let expenses = transactions.filter(t => t.type === 'expense');
             if (dateFilter.start && dateFilter.end) {
                 expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
             }
             
-            // Category trends
             aiPatterns.categoryTrends = {};
             expenses.forEach(t => {
                 if (!aiPatterns.categoryTrends[t.category]) {
@@ -735,11 +1049,12 @@
                 aiPatterns.categoryTrends[t.category].dates.push(new Date(t.date));
             });
             
-            // Day of week pattern
             aiPatterns.dayOfWeekPattern = {};
             expenses.forEach(t => {
                 const day = new Date(t.date).getDay();
-                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayNames = currentLanguage === 'pt' 
+                    ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+                    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 const dayName = dayNames[day];
                 
                 if (!aiPatterns.dayOfWeekPattern[dayName]) {
@@ -749,7 +1064,6 @@
                 aiPatterns.dayOfWeekPattern[dayName].total += t.amount;
             });
             
-            // Spending velocity (average per day)
             const dates = expenses.map(t => new Date(t.date).toDateString());
             const uniqueDates = [...new Set(dates)];
             const totalSpent = expenses.reduce((sum, t) => sum + t.amount, 0);
@@ -757,7 +1071,6 @@
         }
 
         function detectAnomalies() {
-            // NEW: Filter transactions by date range
             let expenses = transactions.filter(t => t.type === 'expense');
             if (dateFilter.start && dateFilter.end) {
                 expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
@@ -765,13 +1078,11 @@
             
             if (expenses.length < 3) return;
             
-            // Calculate average and standard deviation
             const amounts = expenses.map(t => t.amount);
             const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
             const variance = amounts.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / amounts.length;
             const stdDev = Math.sqrt(variance);
             
-            // Flag transactions > 2 standard deviations
             aiPatterns.unusualSpending = expenses.filter(t => t.amount > avg + (2 * stdDev)).map(t => ({
                 ...t,
                 severity: t.amount > avg + (3 * stdDev) ? 'high' : 'medium'
@@ -779,7 +1090,6 @@
         }
 
         function generatePredictions() {
-            // NEW: Filter transactions by date range
             let expenses = transactions.filter(t => t.type === 'expense');
             if (dateFilter.start && dateFilter.end) {
                 expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
@@ -789,30 +1099,25 @@
             
             if (daysWithData < 3) return;
             
-            // Predict monthly spend based on current pace
             const avgDailySpend = expenses.reduce((sum, t) => sum + t.amount, 0) / daysWithData;
             const daysInMonth = 30;
             const projectedMonthly = avgDailySpend * daysInMonth;
             
-            // Predict if budget will be exceeded
             aiPatterns.predictions = {
                 projectedMonthlySpend: projectedMonthly,
                 willExceedBudget: monthlyBudget > 0 && projectedMonthly > monthlyBudget,
                 projectedOverspend: monthlyBudget > 0 ? projectedMonthly - monthlyBudget : 0,
-                confidence: Math.min(daysWithData / 7, 1) // Higher confidence with more data
+                confidence: Math.min(daysWithData / 7, 1)
             };
         }
 
         function generateAIInsights() {
             const insights = [];
-            
-            // NEW: Filter expenses by date range
             let expenses = transactions.filter(t => t.type === 'expense');
             if (dateFilter.start && dateFilter.end) {
                 expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
             }
             
-            // 1. Top spending category
             const topCategory = Object.entries(aiPatterns.categoryTrends)
                 .sort((a, b) => b[1].total - a[1].total)[0];
             
@@ -821,68 +1126,65 @@
                 insights.push({
                     icon: 'fa-chart-pie',
                     color: 'purple',
-                    title: 'Top Spending Category',
-                    text: `${topCategory[0].charAt(0).toUpperCase() + topCategory[0].slice(1)} accounts for ${percentage}% of your spending ($${topCategory[1].total.toFixed(0)}).`,
-                    action: percentage > 40 ? 'Consider reducing this category to save more.' : null
+                    title: currentLanguage === 'pt' ? 'Categoria Principal' : 'Top Spending Category',
+                    text: `${topCategory[0].charAt(0).toUpperCase() + topCategory[0].slice(1)} ${currentLanguage === 'pt' ? 'representa' : 'accounts for'} ${percentage}% ${currentLanguage === 'pt' ? 'dos seus gastos' : 'of your spending'} (${formatMoney(topCategory[1].total)}).`,
+                    action: percentage > 40 ? (currentLanguage === 'pt' ? 'Considere reduzir esta categoria.' : 'Consider reducing this category.') : null
                 });
             }
             
-            // 2. Day of week pattern
             const topDay = Object.entries(aiPatterns.dayOfWeekPattern)
                 .sort((a, b) => b[1].total - a[1].total)[0];
             if (topDay && topDay[1].count > 2) {
                 insights.push({
                     icon: 'fa-calendar-day',
                     color: 'blue',
-                    title: 'Spending Pattern Detected',
-                    text: `You tend to spend most on ${topDay[0]}s ($${topDay[1].total.toFixed(0)} total).`,
-                    action: 'Try planning ahead for these high-spend days.'
+                    title: currentLanguage === 'pt' ? 'Padrão Detectado' : 'Spending Pattern Detected',
+                    text: `${currentLanguage === 'pt' ? 'Você gasta mais às' : 'You spend most on'} ${topDay[0]}s (${formatMoney(topDay[1].total)}).`,
+                    action: currentLanguage === 'pt' ? 'Planeje com antecedência.' : 'Try planning ahead.'
                 });
             }
             
-            // 3. Unusual spending alerts
             aiPatterns.unusualSpending.slice(0, 2).forEach(unusual => {
                 insights.push({
                     icon: 'fa-exclamation-circle',
                     color: unusual.severity === 'high' ? 'red' : 'yellow',
-                    title: unusual.severity === 'high' ? '⚠️ Unusual High Spend' : 'Noticeable Spend',
-                    text: `$${unusual.amount.toFixed(2)} on ${unusual.merchant} is ${unusual.severity === 'high' ? 'significantly' : ''} higher than your average.`,
-                    action: 'Review if this was necessary or a one-time expense.'
+                    title: unusual.severity === 'high' 
+                        ? (currentLanguage === 'pt' ? '⚠️ Gasto Incomum' : '⚠️ Unusual High Spend')
+                        : (currentLanguage === 'pt' ? 'Gasto Notável' : 'Noticeable Spend'),
+                    text: `${formatMoney(unusual.amount)} ${currentLanguage === 'pt' ? 'em' : 'on'} ${unusual.merchant} ${currentLanguage === 'pt' ? 'é maior que a média' : 'is higher than average'}.`,
+                    action: currentLanguage === 'pt' ? 'Revise se foi necessário.' : 'Review if necessary.'
                 });
             });
             
-            // 4. Budget prediction
             if (aiPatterns.predictions.willExceedBudget) {
                 insights.push({
                     icon: 'fa-trending-up',
                     color: 'red',
-                    title: '🚨 Budget Risk Alert',
-                    text: `At current pace, you'll spend $${aiPatterns.predictions.projectedMonthlySpend.toFixed(0)} this month.`,
-                    action: `Cut $${(aiPatterns.predictions.projectedOverspend / 30).toFixed(0)}/day to stay within budget.`
+                    title: currentLanguage === 'pt' ? '🚨 Alerta de Orçamento' : '🚨 Budget Risk Alert',
+                    text: `${currentLanguage === 'pt' ? 'Você gastará' : 'You will spend'} ${formatMoney(aiPatterns.predictions.projectedMonthlySpend)} ${currentLanguage === 'pt' ? 'este mês' : 'this month'}.`,
+                    action: `${currentLanguage === 'pt' ? 'Corte' : 'Cut'} ${formatMoney(aiPatterns.predictions.projectedOverspend / 30)}/${currentLanguage === 'pt' ? 'dia' : 'day'}.`
                 });
             } else if (aiPatterns.predictions.projectedMonthlySpend > 0 && monthlyBudget > 0) {
                 const remaining = monthlyBudget - aiPatterns.predictions.projectedMonthlySpend;
                 insights.push({
                     icon: 'fa-check-circle',
                     color: 'emerald',
-                    title: '✅ On Track',
-                    text: `Projected to stay $${remaining.toFixed(0)} under budget this month.`,
-                    action: 'Great job! Consider putting the extra into savings.'
+                    title: currentLanguage === 'pt' ? '✅ No Caminho Certo' : '✅ On Track',
+                    text: `${currentLanguage === 'pt' ? 'Projeção de' : 'Projected to stay'} ${formatMoney(remaining)} ${currentLanguage === 'pt' ? 'abaixo do orçamento' : 'under budget'}.`,
+                    action: currentLanguage === 'pt' ? 'Ótimo trabalho!' : 'Great job!'
                 });
             }
             
-            // 5. Velocity insight
             if (aiPatterns.spendingVelocity > 50) {
                 insights.push({
                     icon: 'fa-tachometer-alt',
                     color: 'orange',
-                    title: 'Spending Velocity',
-                    text: `Average $${aiPatterns.spendingVelocity.toFixed(0)}/day spending rate.`,
-                    action: aiPatterns.spendingVelocity > 100 ? 'This is high - watch for unnecessary purchases.' : null
+                    title: currentLanguage === 'pt' ? 'Velocidade de Gastos' : 'Spending Velocity',
+                    text: `${currentLanguage === 'pt' ? 'Média de' : 'Average'} ${formatMoney(aiPatterns.spendingVelocity)}/${currentLanguage === 'pt' ? 'dia' : 'day'}.`,
+                    action: aiPatterns.spendingVelocity > 100 ? (currentLanguage === 'pt' ? 'Alto - atenção!' : 'High - watch out!') : null
                 });
             }
             
-            // 6. Savings recommendation
             if (savingsGoal.amount > 0 && savingsGoal.currentSavings < savingsGoal.amount) {
                 const remaining = savingsGoal.amount - savingsGoal.currentSavings;
                 const daysLeft = Math.max(1, Math.ceil((new Date(savingsGoal.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
@@ -892,14 +1194,13 @@
                     insights.push({
                         icon: 'fa-piggy-bank',
                         color: 'emerald',
-                        title: 'Savings Optimization',
-                        text: `Need $${dailyNeeded.toFixed(0)}/day more to hit goal.`,
-                        action: 'Reduce discretionary spending by 20% to make it.'
+                        title: currentLanguage === 'pt' ? 'Otimização de Economia' : 'Savings Optimization',
+                        text: `${currentLanguage === 'pt' ? 'Precisa de' : 'Need'} ${formatMoney(dailyNeeded)}/${currentLanguage === 'pt' ? 'dia' : 'day'} ${currentLanguage === 'pt' ? 'para atingir a meta' : 'to hit goal'}.`,
+                        action: currentLanguage === 'pt' ? 'Reduza gastos em 20%.' : 'Reduce spending by 20%.'
                     });
                 }
             }
             
-            // Render insights
             const container = document.getElementById('ai-insights-container');
             container.innerHTML = insights.map(i => `
                 <div class="p-4 rounded-lg ${i.color === 'red' ? 'bg-red-500/10 border border-red-500/30' : i.color === 'yellow' ? 'bg-yellow-500/10 border border-yellow-500/30' : i.color === 'emerald' ? 'bg-emerald-500/10 border border-emerald-500/30' : i.color === 'blue' ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-purple-500/10 border border-purple-500/30'} flex items-start gap-3 slide-in pattern-card">
@@ -917,8 +1218,6 @@
             const modal = document.getElementById('ai-modal');
             const content = document.getElementById('ai-content');
             
-            // Detailed AI report
-            // NEW: Filter by date range
             let expenses = transactions.filter(t => t.type === 'expense');
             if (dateFilter.start && dateFilter.end) {
                 expenses = expenses.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
@@ -928,74 +1227,71 @@
             let html = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div class="glass rounded-xl p-4 text-center">
-                        <p class="text-sm text-gray-400">Transactions Analyzed</p>
+                        <p class="text-sm text-gray-400">${currentLanguage === 'pt' ? 'Transações Analisadas' : 'Transactions Analyzed'}</p>
                         <p class="text-2xl font-bold text-purple-400">${transactions.length}</p>
                     </div>
                     <div class="glass rounded-xl p-4 text-center">
-                        <p class="text-sm text-gray-400">Pattern Confidence</p>
+                        <p class="text-sm text-gray-400">${currentLanguage === 'pt' ? 'Confiança' : 'Pattern Confidence'}</p>
                         <p class="text-2xl font-bold text-purple-400">${Math.min(Math.floor(transactions.length / 10 * 100), 95)}%</p>
                     </div>
                     <div class="glass rounded-xl p-4 text-center">
-                        <p class="text-sm text-gray-400">Avg Transaction</p>
-                        <p class="text-2xl font-bold text-purple-400">$${expenses.length > 0 ? (totalSpent / expenses.length).toFixed(0) : 0}</p>
+                        <p class="text-sm text-gray-400">${currentLanguage === 'pt' ? 'Média por Transação' : 'Avg Transaction'}</p>
+                        <p class="text-2xl font-bold text-purple-400">${expenses.length > 0 ? formatMoney(totalSpent / expenses.length) : formatMoney(0)}</p>
                     </div>
                 </div>
             `;
             
-            // Category breakdown with AI commentary
             if (Object.keys(aiPatterns.categoryTrends).length > 0) {
-                html += `<h4 class="font-bold text-lg mb-3 text-purple-300">Category Intelligence</h4><div class="space-y-3 mb-6">`;
+                html += `<h4 class="font-bold text-lg mb-3 text-purple-300">${currentLanguage === 'pt' ? 'Inteligência de Categoria' : 'Category Intelligence'}</h4><div class="space-y-3 mb-6">`;
                 
                 Object.entries(aiPatterns.categoryTrends)
                     .sort((a, b) => b[1].total - a[1].total)
                     .forEach(([cat, data]) => {
                         const avg = data.total / data.count;
-                        const freq = data.count > 3 ? 'frequent' : data.count === 1 ? 'one-time' : 'occasional';
+                        const freq = data.count > 3 ? (currentLanguage === 'pt' ? 'frequente' : 'frequent') : data.count === 1 ? (currentLanguage === 'pt' ? 'único' : 'one-time') : (currentLanguage === 'pt' ? 'ocasional' : 'occasional');
                         html += `
                             <div class="glass rounded-lg p-3 flex justify-between items-center">
                                 <div>
                                     <p class="font-semibold capitalize">${cat}</p>
-                                    <p class="text-xs text-gray-400">${data.count} transactions • ${freq} • avg $${avg.toFixed(0)}</p>
+                                    <p class="text-xs text-gray-400">${data.count} ${currentLanguage === 'pt' ? 'transações' : 'transactions'} • ${freq} • ${currentLanguage === 'pt' ? 'média' : 'avg'} ${formatMoney(avg)}</p>
                                 </div>
-                                <p class="font-bold text-purple-400">$${data.total.toFixed(0)}</p>
+                                <p class="font-bold text-purple-400">${formatMoney(data.total)}</p>
                             </div>
                         `;
                     });
                 html += `</div>`;
             }
             
-            // Behavioral predictions
             if (aiPatterns.predictions.projectedMonthlySpend) {
                 html += `
-                    <h4 class="font-bold text-lg mb-3 text-purple-300">AI Predictions</h4>
+                    <h4 class="font-bold text-lg mb-3 text-purple-300">${currentLanguage === 'pt' ? 'Previsões da IA' : 'AI Predictions'}</h4>
                     <div class="glass rounded-xl p-4 mb-4">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-gray-400">Projected Monthly Spend</span>
-                            <span class="text-xl font-bold ${aiPatterns.predictions.willExceedBudget ? 'text-red-400' : 'text-emerald-400'}">$${aiPatterns.predictions.projectedMonthlySpend.toFixed(0)}</span>
+                            <span class="text-gray-400">${currentLanguage === 'pt' ? 'Gasto Mensal Projetado' : 'Projected Monthly Spend'}</span>
+                            <span class="text-xl font-bold ${aiPatterns.predictions.willExceedBudget ? 'text-red-400' : 'text-emerald-400'}">${formatMoney(aiPatterns.predictions.projectedMonthlySpend)}</span>
                         </div>
                         <div class="w-full bg-gray-700 rounded-full h-2">
                             <div class="bg-purple-500 h-2 rounded-full" style="width: ${Math.min(aiPatterns.predictions.confidence * 100, 100)}%"></div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">Confidence: ${(aiPatterns.predictions.confidence * 100).toFixed(0)}% (more data = better predictions)</p>
+                        <p class="text-xs text-gray-500 mt-2">${currentLanguage === 'pt' ? 'Confiança' : 'Confidence'}: ${(aiPatterns.predictions.confidence * 100).toFixed(0)}%</p>
                     </div>
                 `;
             }
             
-            // Recommendations
             html += `
-                <h4 class="font-bold text-lg mb-3 text-purple-300">AI Recommendations</h4>
+                <h4 class="font-bold text-lg mb-3 text-purple-300">${currentLanguage === 'pt' ? 'Recomendações' : 'AI Recommendations'}</h4>
                 <ul class="space-y-2">
                     <li class="flex items-start gap-2 text-sm text-gray-300">
                         <i class="fas fa-check text-emerald-400 mt-1"></i>
-                        <span>Set up automatic transfers on payday to remove temptation to spend</span>
+                        <span>${currentLanguage === 'pt' ? 'Configure transferências automáticas no dia de pagamento' : 'Set up automatic transfers on payday'}</span>
                     </li>
                     <li class="flex items-start gap-2 text-sm text-gray-300">
                         <i class="fas fa-check text-emerald-400 mt-1"></i>
-                        <span>Review subscriptions - AI detected potential recurring expenses</span>
+                        <span>${currentLanguage === 'pt' ? 'Revise assinaturas - IA detectou despesas recorrentes' : 'Review subscriptions - AI detected recurring expenses'}</span>
                     </li>
                     <li class="flex items-start gap-2 text-sm text-gray-300">
                         <i class="fas fa-check text-emerald-400 mt-1"></i>
-                        <span>Use the 24-hour rule for purchases over $50</span>
+                        <span>${currentLanguage === 'pt' ? 'Use a regra das 24 horas para compras acima de R$ 250' : 'Use the 24-hour rule for purchases over R$ 250'}</span>
                     </li>
                 </ul>
             `;
@@ -1021,7 +1317,7 @@
         function setBudget() {
             const amount = parseFloat(document.getElementById('budget-input').value);
             if (!amount || amount <= 0) {
-                showNotification('Error', 'Please enter a valid budget amount', 'error');
+                showNotification(currentLanguage === 'pt' ? 'Erro' : 'Error', currentLanguage === 'pt' ? 'Valor inválido' : 'Please enter valid amount', 'error');
                 return;
             }
             
@@ -1029,15 +1325,14 @@
             updateBudgetDisplay();
             calculateDailyLimit();
             closeBudgetModal();
-            showNotification('Budget Set', `Monthly budget: $${monthlyBudget.toLocaleString()}`, 'success');
+            showNotification(currentLanguage === 'pt' ? 'Orçamento Definido' : 'Budget Set', `${currentLanguage === 'pt' ? 'Orçamento mensal' : 'Monthly budget'}: ${formatMoney(monthlyBudget)}`, 'success');
             runAIAnalysis();
         }
 
         function openSavingsGoalModal() {
             document.getElementById('savings-goal-modal').classList.remove('hidden');
-            document.getElementById('savings-goal-input').focus();
+            document.getElementById('savings-goal-name').focus();
             
-            // NEW: Add event listeners for real-time calculation
             document.getElementById('savings-goal-input').addEventListener('input', updateMonthlyCalcPreview);
             document.getElementById('savings-date-input').addEventListener('change', updateMonthlyCalcPreview);
             updateMonthlyCalcPreview();
@@ -1046,8 +1341,7 @@
         function closeSavingsGoalModal() {
             document.getElementById('savings-goal-modal').classList.add('hidden');
         }
-        
-        // NEW: Real-time monthly calculation preview
+
         function updateMonthlyCalcPreview() {
             const amount = parseFloat(document.getElementById('savings-goal-input').value) || 0;
             const deadline = document.getElementById('savings-date-input').value;
@@ -1059,32 +1353,34 @@
                 const monthlyNeed = amount / monthsLeft;
                 
                 document.getElementById('monthly-calc-preview').classList.remove('hidden');
-                document.getElementById('monthly-required').textContent = `$${monthlyNeed.toFixed(2)}`;
-                document.getElementById('months-until').textContent = `${monthsLeft} month${monthsLeft !== 1 ? 's' : ''} to reach goal`;
+                document.getElementById('monthly-required').textContent = formatMoney(monthlyNeed);
+                document.getElementById('months-until').textContent = `${monthsLeft} ${currentLanguage === 'pt' ? 'meses para atingir a meta' : 'months to reach goal'}`;
             } else {
                 document.getElementById('monthly-calc-preview').classList.add('hidden');
             }
         }
 
         function setSavingsGoal() {
+            const name = document.getElementById('savings-goal-name').value || (currentLanguage === 'pt' ? 'Minha Meta' : 'My Goal');
+            const description = document.getElementById('savings-goal-desc').value || '';
+            const icon = document.getElementById('selected-goal-icon').value;
             const amount = parseFloat(document.getElementById('savings-goal-input').value);
             const deadline = document.getElementById('savings-date-input').value;
             
             if (!amount || amount <= 0) {
-                showNotification('Error', 'Please enter a valid savings goal', 'error');
+                showNotification(currentLanguage === 'pt' ? 'Erro' : 'Error', currentLanguage === 'pt' ? 'Meta inválida' : 'Please enter valid goal', 'error');
                 return;
             }
             
-            savingsGoal = { ...savingsGoal, amount, deadline, dailyLimit: 0 };
+            savingsGoal = { ...savingsGoal, name, description, icon, amount, deadline, dailyLimit: 0 };
             calculateDailyLimit();
             updateSavingsDisplay();
-            updateSavingsGoalDisplay(); // NEW
+            updateSavingsGoalDisplay();
             closeSavingsGoalModal();
-            showNotification('Goal Set', `Save $${amount.toLocaleString()} by ${new Date(deadline).toLocaleDateString()}`, 'success');
+            showNotification(currentLanguage === 'pt' ? 'Meta Definida' : 'Goal Set', `${name}: ${formatMoney(amount)}`, 'success');
             runAIAnalysis();
         }
 
-        // NEW: Update savings goal section display
         function updateSavingsGoalDisplay() {
             if (savingsGoal.amount <= 0) {
                 document.getElementById('savings-goal-section').classList.add('hidden');
@@ -1092,20 +1388,39 @@
             }
             
             document.getElementById('savings-goal-section').classList.remove('hidden');
-            document.getElementById('goal-target-display').textContent = `$${savingsGoal.amount.toLocaleString()}`;
-            document.getElementById('goal-date-display').textContent = new Date(savingsGoal.deadline).toLocaleDateString();
-            document.getElementById('goal-current-display').textContent = `$${savingsGoal.currentSavings.toLocaleString()}`;
+            
+            // Update icon display
+            const iconMap = {
+                'fa-plane': '✈️', 'fa-shopping-bag': '🛍️', 'fa-car': '🚗', 'fa-home': '🏠',
+                'fa-graduation-cap': '🎓', 'fa-heart': '❤️', 'fa-gamepad': '🎮', 'fa-laptop': '💻',
+                'fa-bicycle': '🚲', 'fa-camera': '📷', 'fa-gift': '🎁', 'fa-piggy-bank': '🐷'
+            };
+            document.getElementById('goal-icon-display').textContent = iconMap[savingsGoal.icon] || '✈️';
+            
+            document.getElementById('goal-name-display').textContent = savingsGoal.name;
+            document.getElementById('goal-desc-display').textContent = savingsGoal.description || '';
+            document.getElementById('goal-desc-display').style.display = savingsGoal.description ? 'block' : 'none';
+            
+            document.getElementById('goal-target-display').textContent = formatMoney(savingsGoal.amount);
+            document.getElementById('goal-date-display').textContent = new Date(savingsGoal.deadline).toLocaleDateString(currentLanguage === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' });
+            document.getElementById('goal-current-display').textContent = formatMoney(savingsGoal.currentSavings);
             
             const percentage = Math.min(100, Math.max(0, (savingsGoal.currentSavings / savingsGoal.amount) * 100));
-            document.getElementById('goal-percent-display').textContent = `${percentage.toFixed(1)}% complete`;
+            document.getElementById('goal-progress-text').textContent = `${percentage.toFixed(1)}%`;
+            document.getElementById('goal-progress-bar-main').style.width = `${percentage}%`;
+            
+            const remaining = savingsGoal.amount - savingsGoal.currentSavings;
+            document.getElementById('goal-amount-remaining').textContent = `${formatMoney(remaining)} ${currentLanguage === 'pt' ? 'restando' : 'remaining'}`;
             
             const today = new Date();
             const targetDate = new Date(savingsGoal.deadline);
             const monthsLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24 * 30)));
-            const monthlyNeed = (savingsGoal.amount - savingsGoal.currentSavings) / monthsLeft;
+            const daysLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
+            const monthlyNeed = remaining / monthsLeft;
             
-            document.getElementById('goal-monthly-need').textContent = `$${monthlyNeed.toFixed(2)}`;
-            document.getElementById('goal-time-remaining').textContent = `${monthsLeft} month${monthsLeft !== 1 ? 's' : ''}`;
+            document.getElementById('goal-monthly-need').textContent = formatMoney(monthlyNeed);
+            document.getElementById('goal-time-remaining').textContent = `${monthsLeft} ${currentLanguage === 'pt' ? 'meses' : 'months'}`;
+            document.getElementById('goal-deadline-days').textContent = `${daysLeft} ${currentLanguage === 'pt' ? 'dias restantes' : 'days left'}`;
         }
 
         function calculateDailyLimit() {
@@ -1121,20 +1436,19 @@
             const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
             const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
             
-            const dailySavingsRequired = savingsGoal.amount / daysLeft;
+            const dailySavingsRequired = (savingsGoal.amount - savingsGoal.currentSavings) / daysLeft;
             const dailySpendLimit = Math.max(0, (monthlyBudget - budgetSpent) / daysRemaining - dailySavingsRequired);
             
             savingsGoal.dailyLimit = dailySpendLimit;
             
             document.getElementById('daily-limit-card').classList.remove('hidden');
-            document.getElementById('daily-limit-amount').textContent = `$${dailySpendLimit.toFixed(0)}`;
-            document.getElementById('days-remaining').textContent = `${daysLeft} days to save $${savingsGoal.amount.toLocaleString()}`;
+            document.getElementById('daily-limit-amount').textContent = formatMoney(dailySpendLimit);
+            document.getElementById('days-remaining').textContent = `${daysLeft} ${currentLanguage === 'pt' ? 'dias para economizar' : 'days to save'} ${formatMoney(savingsGoal.amount)}`;
             
             updateDailySpending();
         }
 
         function updateDailySpending() {
-            // NEW: Filter by date range
             let dailyTransactions = transactions.filter(t => t.type === 'expense');
             if (dateFilter.start && dateFilter.end) {
                 dailyTransactions = dailyTransactions.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
@@ -1145,25 +1459,24 @@
                 .filter(t => new Date(t.date).toDateString() === today)
                 .reduce((sum, t) => sum + t.amount, 0);
             
-            document.getElementById('spent-today').textContent = `$${spentToday.toFixed(2)}`;
+            document.getElementById('spent-today').textContent = formatMoney(spentToday);
             
             const statusEl = document.getElementById('daily-status');
             if (savingsGoal.dailyLimit > 0) {
                 const percent = (spentToday / savingsGoal.dailyLimit) * 100;
                 if (percent > 100) {
-                    statusEl.textContent = '⚠️ Over limit!';
+                    statusEl.textContent = currentLanguage === 'pt' ? '⚠️ Acima do limite!' : '⚠️ Over limit!';
                     statusEl.className = 'text-xs text-red-400 font-bold';
                 } else if (percent > 80) {
-                    statusEl.textContent = '⚡ Approaching limit';
+                    statusEl.textContent = currentLanguage === 'pt' ? '⚡ Próximo do limite' : '⚡ Approaching limit';
                     statusEl.className = 'text-xs text-yellow-400';
                 } else {
-                    statusEl.textContent = '✅ On track';
+                    statusEl.textContent = currentLanguage === 'pt' ? '✅ No caminho certo' : '✅ On track';
                     statusEl.className = 'text-xs text-emerald-400';
                 }
             }
         }
 
-        // Alert System
         function checkBudgetAlerts() {
             if (monthlyBudget <= 0) return;
             
@@ -1179,11 +1492,11 @@
                 banner.classList.remove('hidden', 'alert-breach');
                 banner.style.borderLeftColor = '#f59e0b';
                 icon.className = 'fas fa-exclamation-triangle text-2xl mt-1 text-yellow-400';
-                title.textContent = '⚠️ Budget Alert: 80% Used';
+                title.textContent = currentLanguage === 'pt' ? '⚠️ Alerta: 80% Usado' : '⚠️ Budget Alert: 80% Used';
                 title.className = 'font-bold text-lg mb-1 text-yellow-400';
-                message.textContent = `You've spent $${budgetSpent.toFixed(2)} of your $${monthlyBudget.toLocaleString()} budget.`;
-                advice.textContent = `Daily limit reduced to $${(savingsGoal.dailyLimit * 0.5).toFixed(0)}. Consider pausing non-essential spending.`;
-                showNotification('Budget Warning', 'You\'ve reached 80% of your budget!', 'warning');
+                message.textContent = `${currentLanguage === 'pt' ? 'Você gastou' : 'You spent'} ${formatMoney(budgetSpent)} ${currentLanguage === 'pt' ? 'do seu orçamento de' : 'of your'} ${formatMoney(monthlyBudget)}.`;
+                advice.textContent = `${currentLanguage === 'pt' ? 'Limite diário reduzido. Considere pausar gastos.' : 'Daily limit reduced. Consider pausing spending.'}`;
+                showNotification(currentLanguage === 'pt' ? 'Alerta de Orçamento' : 'Budget Warning', currentLanguage === 'pt' ? 'Você atingiu 80% do orçamento!' : 'You reached 80% of budget!', 'warning');
             }
             
             if (percentUsed >= 100) {
@@ -1191,17 +1504,17 @@
                 banner.classList.add('alert-breach');
                 banner.style.borderLeftColor = '#ef4444';
                 icon.className = 'fas fa-ban text-2xl mt-1 text-red-400';
-                title.textContent = '🚨 BUDGET BREACHED!';
+                title.textContent = currentLanguage === 'pt' ? '🚨 ORÇAMENTO ESTOURADO!' : '🚨 BUDGET BREACHED!';
                 title.className = 'font-bold text-lg mb-1 text-red-400';
-                message.textContent = `You've exceeded your $${monthlyBudget.toLocaleString()} budget by $${(budgetSpent - monthlyBudget).toFixed(2)}!`;
+                message.textContent = `${currentLanguage === 'pt' ? 'Você ultrapassou' : 'You exceeded'} ${formatMoney(monthlyBudget)} ${currentLanguage === 'pt' ? 'em' : 'by'} ${formatMoney(budgetSpent - monthlyBudget)}!`;
                 
                 const overspend = budgetSpent - monthlyBudget;
                 const daysLeft = Math.max(1, new Date(savingsGoal.deadline || new Date().setMonth(new Date().getMonth() + 1)) - new Date()) / (1000 * 60 * 60 * 24);
-                advice.textContent = `URGENT: Cut spending by $${(overspend / daysLeft + savingsGoal.dailyLimit).toFixed(0)}/day to recover.`;
+                advice.textContent = `${currentLanguage === 'pt' ? 'URGENTE: Corte' : 'URGENT: Cut'} ${formatMoney((overspend / daysLeft + savingsGoal.dailyLimit))}/${currentLanguage === 'pt' ? 'dia' : 'day'}.`;
                 
                 if (!alertShown.breached) {
                     alertShown.breached = true;
-                    showNotification('BUDGET BREACHED!', 'Stop spending immediately!', 'error');
+                    showNotification(currentLanguage === 'pt' ? 'ORÇAMENTO ESTOURADO!' : 'BUDGET BREACHED!', currentLanguage === 'pt' ? 'Pare de gastar imediatamente!' : 'Stop spending immediately!', 'error');
                 }
             }
         }
@@ -1210,7 +1523,6 @@
             document.getElementById('smart-alert-banner').classList.add('hidden');
         }
 
-        // Display Functions
         function updateBudgetDisplay() {
             const budgetEl = document.getElementById('monthly-budget');
             const progressEl = document.getElementById('budget-progress');
@@ -1218,7 +1530,7 @@
             const card = document.getElementById('budget-card');
             
             if (monthlyBudget > 0) {
-                budgetEl.textContent = `$${monthlyBudget.toLocaleString()}`;
+                budgetEl.textContent = formatMoney(monthlyBudget);
                 const percent = Math.min((budgetSpent / monthlyBudget) * 100, 100);
                 progressEl.style.width = percent + '%';
                 
@@ -1234,7 +1546,7 @@
                 }
                 
                 const remaining = monthlyBudget - budgetSpent;
-                textEl.textContent = `$${budgetSpent.toLocaleString()} spent • $${remaining.toLocaleString()} left`;
+                textEl.textContent = `${formatMoney(budgetSpent)} ${currentLanguage === 'pt' ? 'gasto' : 'spent'} • ${formatMoney(remaining)} ${currentLanguage === 'pt' ? 'restando' : 'left'}`;
                 textEl.className = remaining < 0 ? 'text-xs text-red-400 font-bold' : 'text-xs text-gray-400';
             }
             
@@ -1245,11 +1557,11 @@
             const savingsEl = document.getElementById('total-savings');
             const goalText = document.getElementById('savings-goal-text');
             
-            savingsEl.textContent = `$${savings.toLocaleString()}`;
+            savingsEl.textContent = formatMoney(savingsGoal.currentSavings);
             
             if (savingsGoal.amount > 0) {
                 const percent = Math.min((savingsGoal.currentSavings / savingsGoal.amount) * 100, 100);
-                goalText.textContent = `Goal: $${savingsGoal.amount.toLocaleString()} (${percent.toFixed(0)}%)`;
+                goalText.textContent = `${currentLanguage === 'pt' ? 'Meta' : 'Goal'}: ${formatMoney(savingsGoal.amount)} (${percent.toFixed(0)}%)`;
                 goalText.className = 'text-sm mt-1 ' + (percent >= 100 ? 'text-emerald-400 font-bold' : 'text-gray-400');
                 updateSavingsChart(percent);
             }
@@ -1268,7 +1580,7 @@
             savingsChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Saved', 'Remaining'],
+                    labels: [currentLanguage === 'pt' ? 'Economizado' : 'Saved', currentLanguage === 'pt' ? 'Restante' : 'Remaining'],
                     datasets: [{
                         data: [percent, 100 - percent],
                         backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(75, 85, 99, 0.3)'],
@@ -1289,7 +1601,6 @@
             });
         }
 
-        // Auth
         function switchAuthMode(mode) {
             const loginTab = document.getElementById('tab-login');
             const registerTab = document.getElementById('tab-register');
@@ -1300,19 +1611,19 @@
                 loginTab.className = 'flex-1 py-2 rounded-xl bg-indigo-600 text-white font-semibold transition-all';
                 registerTab.className = 'flex-1 py-2 rounded-xl bg-gray-800 text-gray-400 font-semibold transition-all';
                 nameField.classList.add('hidden');
-                btnText.textContent = 'Login';
+                btnText.textContent = currentLanguage === 'pt' ? 'Entrar' : 'Login';
             } else {
                 loginTab.className = 'flex-1 py-2 rounded-xl bg-gray-800 text-gray-400 font-semibold transition-all';
                 registerTab.className = 'flex-1 py-2 rounded-xl bg-indigo-600 text-white font-semibold transition-all';
                 nameField.classList.remove('hidden');
-                btnText.textContent = 'Create Account';
+                btnText.textContent = currentLanguage === 'pt' ? 'Criar Conta' : 'Create Account';
             }
         }
 
         document.getElementById('auth-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const email = document.getElementById('user-email').value;
-            const name = document.getElementById('user-name').value || 'Saver';
+            const name = document.getElementById('user-name').value || (currentLanguage === 'pt' ? 'Economizador' : 'Saver');
             
             currentUser = { email, name, id: Date.now() };
             localStorage.setItem('smartsave_user', JSON.stringify(currentUser));
@@ -1328,7 +1639,7 @@
                 document.getElementById('user-initial').textContent = name[0].toUpperCase();
                 
                 initDatePicker();
-                showNotification('Welcome!', `AI monitoring activated, ${name}!`, 'success');
+                showNotification(currentLanguage === 'pt' ? 'Bem-vindo!' : 'Welcome!', `${currentLanguage === 'pt' ? 'Monitoramento ativado' : 'AI monitoring activated'}, ${name}!`, 'success');
             }, 500);
         });
 
@@ -1345,9 +1656,7 @@
             document.getElementById('bank-modal').classList.add('hidden');
         }
 
-        // Charts
         function updateChartWithData() {
-            // NEW: Filter by date range
             let filteredTransactions = transactions;
             if (dateFilter.start && dateFilter.end) {
                 filteredTransactions = transactions.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
@@ -1364,8 +1673,8 @@
                 document.getElementById('chart-container').innerHTML = `
                     <div class="empty-state text-center">
                         <i class="fas fa-chart-pie text-4xl text-gray-600 mb-3"></i>
-                        <h4 class="text-lg font-semibold text-gray-400 mb-2">No data yet</h4>
-                        <p class="text-sm text-gray-500 mb-4">Add transactions to see analytics</p>
+                        <h4 class="text-lg font-semibold text-gray-400 mb-2">${currentLanguage === 'pt' ? 'Sem dados ainda' : 'No data yet'}</h4>
+                        <p class="text-sm text-gray-500 mb-4">${currentLanguage === 'pt' ? 'Adicione transações' : 'Add transactions to see analytics'}</p>
                     </div>
                 `;
                 return;
@@ -1374,7 +1683,17 @@
             const chartContainer = document.getElementById('chart-container');
             chartContainer.innerHTML = '<canvas id="spendingChart"></canvas>';
             
-            const labels = Object.keys(breakdown).map(c => c.charAt(0).toUpperCase() + c.slice(1));
+            const labels = Object.keys(breakdown).map(c => {
+                const catNames = currentLanguage === 'pt' ? {
+                    food: 'Comida', shopping: 'Compras', transport: 'Transporte',
+                    entertainment: 'Entretenimento', bills: 'Contas', others: 'Outros'
+                } : {
+                    food: 'Food', shopping: 'Shopping', transport: 'Transport',
+                    entertainment: 'Entertainment', bills: 'Bills', others: 'Others'
+                };
+                return catNames[c] || c.charAt(0).toUpperCase() + c.slice(1);
+            });
+            
             const data = Object.values(breakdown);
             const colors = ['rgba(244, 63, 94, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(245, 158, 11, 0.8)'];
             
@@ -1401,12 +1720,12 @@
             
             const total = Object.values(breakdownData).reduce((a, b) => a + b, 0);
             const colors = {
-                food: { color: 'rose', icon: 'fa-utensils', label: 'Food & Dining' },
-                shopping: { color: 'blue', icon: 'fa-shopping-bag', label: 'Shopping' },
-                transport: { color: 'emerald', icon: 'fa-bus', label: 'Transport' },
-                entertainment: { color: 'purple', icon: 'fa-film', label: 'Entertainment' },
-                bills: { color: 'yellow', icon: 'fa-bolt', label: 'Bills' },
-                others: { color: 'gray', icon: 'fa-receipt', label: 'Others' }
+                food: { color: 'rose', icon: 'fa-utensils', label: currentLanguage === 'pt' ? 'Comida' : 'Food & Dining' },
+                shopping: { color: 'blue', icon: 'fa-shopping-bag', label: currentLanguage === 'pt' ? 'Compras' : 'Shopping' },
+                transport: { color: 'emerald', icon: 'fa-bus', label: currentLanguage === 'pt' ? 'Transporte' : 'Transport' },
+                entertainment: { color: 'purple', icon: 'fa-film', label: currentLanguage === 'pt' ? 'Entretenimento' : 'Entertainment' },
+                bills: { color: 'yellow', icon: 'fa-bolt', label: currentLanguage === 'pt' ? 'Contas' : 'Bills' },
+                others: { color: 'gray', icon: 'fa-receipt', label: currentLanguage === 'pt' ? 'Outros' : 'Others' }
             };
             
             container.innerHTML = Object.entries(breakdownData)
@@ -1422,16 +1741,15 @@
                                 </div>
                                 <div>
                                     <p class="font-semibold text-sm">${config.label}</p>
-                                    <p class="text-xs text-gray-400">${percent}% of spending</p>
+                                    <p class="text-xs text-gray-400">${percent}% ${currentLanguage === 'pt' ? 'dos gastos' : 'of spending'}</p>
                                 </div>
                             </div>
-                            <span class="font-bold text-${config.color}-400">$${amount.toFixed(0)}</span>
+                            <span class="font-bold text-${config.color}-400">${formatMoney(amount)}</span>
                         </div>
                     `;
                 }).join('');
         }
 
-        // Transaction Functions
         function setTransactionType(type) {
             currentTransactionType = type;
             const expenseBtn = document.getElementById('btn-expense');
@@ -1452,12 +1770,12 @@
             const dateInput = document.getElementById('transaction-date').value;
             
             if (!amount || amount <= 0) {
-                showNotification('Error', 'Please enter a valid amount', 'error');
+                showNotification(currentLanguage === 'pt' ? 'Erro' : 'Error', currentLanguage === 'pt' ? 'Valor inválido' : 'Please enter valid amount', 'error');
                 return;
             }
 
             const isIncome = currentTransactionType === 'income';
-            const merchant = isIncome ? 'Manual Income' : `${category.charAt(0).toUpperCase() + category.slice(1)} Expense`;
+            const merchant = isIncome ? (currentLanguage === 'pt' ? 'Receita Manual' : 'Manual Income') : `${category.charAt(0).toUpperCase() + category.slice(1)}`;
             const transactionDate = dateInput ? new Date(dateInput) : new Date();
             
             transactions.unshift({
@@ -1477,15 +1795,9 @@
                 budgetSpent += amount;
             }
             
-            updateSavingsDisplay();
-            updateBudgetDisplay();
-            updateDailySpending();
-            updateTransactionsUI();
-            updateChartWithData();
-            updateSavingsGoalDisplay(); // NEW
+            updateAllDisplays();
             runAIAnalysis();
             
-            // Check daily limit breach
             if (!isIncome && savingsGoal.dailyLimit > 0) {
                 const today = new Date().toDateString();
                 const spentToday = transactions
@@ -1493,15 +1805,15 @@
                     .reduce((sum, t) => sum + t.amount, 0);
                 
                 if (spentToday > savingsGoal.dailyLimit) {
-                    showNotification('Daily Limit Exceeded!', `Spent $${spentToday.toFixed(2)} of $${savingsGoal.dailyLimit.toFixed(0)} limit`, 'error');
+                    showNotification(currentLanguage === 'pt' ? 'Limite Diário Excedido!' : 'Daily Limit Exceeded!', `${currentLanguage === 'pt' ? 'Gasto' : 'Spent'} ${formatMoney(spentToday)} ${currentLanguage === 'pt' ? 'de' : 'of'} ${formatMoney(savingsGoal.dailyLimit)}`, 'error');
                 }
             }
             
             if (transactions.length === 1) {
                 updateStreak();
-                showNotification('First Step!', 'AI is now monitoring your patterns', 'success');
+                showNotification(currentLanguage === 'pt' ? 'Primeiro Passo!' : 'First Step!', currentLanguage === 'pt' ? 'IA monitorando padrões' : 'AI is monitoring your patterns', 'success');
             } else {
-                showNotification('Success', 'Transaction added & analyzed by AI', 'success');
+                showNotification(currentLanguage === 'pt' ? 'Sucesso' : 'Success', currentLanguage === 'pt' ? 'Transação adicionada' : 'Transaction added', 'success');
             }
             
             document.getElementById('transaction-amount').value = '';
@@ -1511,7 +1823,6 @@
         function updateTransactionsUI() {
             const container = document.getElementById('recent-activity');
             
-            // NEW: Filter by date range
             let filteredTransactions = transactions;
             if (dateFilter.start && dateFilter.end) {
                 filteredTransactions = transactions.filter(t => t.date >= dateFilter.start && t.date <= dateFilter.end);
@@ -1521,7 +1832,7 @@
                 container.innerHTML = `
                     <div class="empty-state py-8">
                         <i class="fas fa-receipt text-gray-600"></i>
-                        <p class="text-sm text-gray-500">No transactions yet</p>
+                        <p class="text-sm text-gray-500">${currentLanguage === 'pt' ? 'Nenhuma transação' : 'No transactions yet'}</p>
                     </div>
                 `;
                 return;
@@ -1540,7 +1851,7 @@
                 const color = categoryColors[t.category];
                 const icon = categoryIcons[t.category];
                 const date = new Date(t.date);
-                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const dateStr = date.toLocaleDateString(currentLanguage === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', day: 'numeric' });
                 
                 return `
                     <div class="transaction-item flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors slide-in group">
@@ -1554,7 +1865,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'} font-bold">${t.type === 'income' ? '+' : '-'}$${t.amount.toFixed(2)}</span>
+                            <span class="${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'} font-bold">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</span>
                             <button onclick="openDeleteModal(${t.id})" class="delete-btn w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center text-red-400 transition-all">
                                 <i class="fas fa-trash-alt text-sm"></i>
                             </button>
@@ -1567,7 +1878,7 @@
         function updateStreak() {
             streakCount = 1;
             document.getElementById('streak-count').textContent = streakCount;
-            document.getElementById('streak-display').textContent = `${streakCount} Day Streak`;
+            document.getElementById('streak-display').textContent = `${streakCount} ${currentLanguage === 'pt' ? 'Dia' : 'Day'} Streak`;
             const fireIcon = document.querySelector('.fa-fire');
             if (fireIcon) {
                 fireIcon.classList.remove('opacity-30');
@@ -1594,46 +1905,40 @@
             setTimeout(() => notif.classList.add('hidden'), type === 'error' ? 5000 : 3000);
         }
 
-        // NEW: Date range filter functions
         function applyDateFilter() {
             const start = document.getElementById('monitor-start-date').value;
             const end = document.getElementById('monitor-end-date').value;
             
             if (!start || !end) {
-                showNotification('Error', 'Please select both start and end dates', 'error');
+                showNotification(currentLanguage === 'pt' ? 'Erro' : 'Error', currentLanguage === 'pt' ? 'Selecione ambas as datas' : 'Please select both dates', 'error');
                 return;
             }
             
             if (start > end) {
-                showNotification('Error', 'Start date cannot be after end date', 'error');
+                showNotification(currentLanguage === 'pt' ? 'Erro' : 'Error', currentLanguage === 'pt' ? 'Data inicial não pode ser posterior' : 'Start date cannot be after end', 'error');
                 return;
             }
             
             dateFilter = { start, end };
-            document.getElementById('filtered-stats').textContent = `Showing ${start} to ${end}`;
+            document.getElementById('filtered-stats').textContent = `${start} ${currentLanguage === 'pt' ? 'a' : 'to'} ${end}`;
             
-            updateTransactionsUI();
-            updateChartWithData();
+            updateAllDisplays();
             runAIAnalysis();
-            updateDailySpending();
             
-            showNotification('Filter Applied', `Showing transactions from ${start} to ${end}`, 'success');
+            showNotification(currentLanguage === 'pt' ? 'Filtro Aplicado' : 'Filter Applied', `${currentLanguage === 'pt' ? 'Período' : 'Period'}: ${start} ${currentLanguage === 'pt' ? 'a' : 'to'} ${end}`, 'success');
         }
 
         function resetDateFilter() {
             dateFilter = { start: null, end: null };
             initDatePicker();
-            document.getElementById('filtered-stats').textContent = 'Showing all transactions';
+            document.getElementById('filtered-stats').textContent = currentLanguage === 'pt' ? 'Mostrando todas as transações' : 'Showing all transactions';
             
-            updateTransactionsUI();
-            updateChartWithData();
+            updateAllDisplays();
             runAIAnalysis();
-            updateDailySpending();
             
-            showNotification('Filter Reset', 'Showing all transactions', 'info');
+            showNotification(currentLanguage === 'pt' ? 'Filtro Limpo' : 'Filter Reset', currentLanguage === 'pt' ? 'Mostrando todas as transações' : 'Showing all transactions', 'info');
         }
 
-        // Load
         window.addEventListener('load', () => {
             const saved = localStorage.getItem('smartsave_user');
             if (saved) {

@@ -194,7 +194,7 @@
                     <i class="fas fa-trash-alt text-red-400 text-2xl"></i>
                 </div>
                 <h3 class="text-2xl font-bold mb-2" data-i18n="deleteConfirm">Delete Transaction?</h3>
-                <p class="text-gray-400 mb-6" data-i18n="deleteDesc">This will remove the transaction and reverse its effect on your balance. This action cannot be undone.</p>
+                <p class="text-gray-400 mb-6" data-i18n="deleteDesc">This will remove the transaction and reverse its effect on your balances. This action cannot be undone.</p>
                 <div class="flex gap-3">
                     <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition-all" data-i18n="cancel">Cancel</button>
                     <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-bold transition-all" data-i18n="delete">Delete</button>
@@ -479,50 +479,38 @@
             <!-- Injected by AI -->
         </div>
 
-        <!-- Daily Limit Card -->
-        <div id="daily-limit-card" class="hidden mb-6 glass rounded-2xl p-4 border border-indigo-500/30 bg-indigo-900/10 slide-in">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                        <i class="fas fa-calculator text-indigo-400 text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-400" data-i18n="aiDailyLimit">AI Recommended Daily Limit</p>
-                        <h3 class="text-2xl font-bold text-indigo-400" id="daily-limit-amount">$0</h3>
-                        <p class="text-xs text-gray-500" id="days-remaining">to reach your goal</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-sm text-gray-400" data-i18n="spentToday">Spent Today</p>
-                    <h3 class="text-2xl font-bold" id="spent-today">$0</h3>
-                    <p class="text-xs" id="daily-status">On track</p>
-                </div>
-            </div>
-        </div>
-
         <!-- Welcome -->
         <div class="mb-8 text-center slide-in">
             <h1 class="text-4xl md:text-5xl font-bold mb-2"><span data-i18n="welcome">Welcome</span>, <span class="gradient-text" id="display-name">Saver</span>! 🎉</h1>
             <p class="text-gray-400 text-lg" id="smart-subtitle" data-i18n="aiMonitoring">AI is monitoring your spending patterns</p>
         </div>
 
-        <!-- Stats Grid -->
+        <!-- Stats Grid - NEW FINANCIAL MODEL -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Total Savings with Chart -->
-            <div class="glass rounded-2xl p-6 card-hover relative overflow-hidden lg:col-span-2">
+            <!-- Available Balance (Cash) -->
+            <div class="glass rounded-2xl p-6 card-hover relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-gray-400 text-sm mb-1" data-i18n="totalSavings">Total Savings</p>
-                        <h3 class="text-3xl font-bold text-emerald-400" id="total-savings">$0</h3>
-                        <p class="text-sm mt-1" id="savings-goal-text">Goal: Not set</p>
+                        <p class="text-gray-400 text-sm mb-1" data-i18n="availableBalance">Available Balance</p>
+                        <h3 class="text-3xl font-bold text-indigo-400" id="available-balance">$0</h3>
+                        <p class="text-sm mt-1 text-gray-400" data-i18n="whatYouCanSpend">What you can spend now</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                        <i class="fas fa-wallet text-indigo-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Savings Balance (Reserved) -->
+            <div class="glass rounded-2xl p-6 card-hover relative overflow-hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-gray-400 text-sm mb-1" data-i18n="savingsBalance">Savings Balance</p>
+                        <h3 class="text-3xl font-bold text-emerald-400" id="savings-balance">$0</h3>
+                        <p class="text-sm mt-1 text-gray-400" data-i18n="reservedForGoals">Reserved for goals</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
                         <i class="fas fa-piggy-bank text-emerald-400 text-xl"></i>
-                    </div>
-                </div>
-                <div class="h-24 mt-4" id="savings-chart-container">
-                    <div class="empty-state h-full flex items-center justify-center">
-                        <p class="text-xs text-gray-500" data-i18n="setGoalToSee">Set a savings goal to see progress</p>
                     </div>
                 </div>
             </div>
@@ -559,6 +547,27 @@
                     </div>
                 </div>
                 <p class="text-sm text-gray-400" data-i18n="keepLogging">Keep logging daily!</p>
+            </div>
+        </div>
+
+        <!-- Daily Limit Card -->
+        <div id="daily-limit-card" class="hidden mb-6 glass rounded-2xl p-4 border border-indigo-500/30 bg-indigo-900/10 slide-in">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                        <i class="fas fa-calculator text-indigo-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400" data-i18n="aiDailyLimit">AI Recommended Daily Limit</p>
+                        <h3 class="text-2xl font-bold text-indigo-400" id="daily-limit-amount">$0</h3>
+                        <p class="text-xs text-gray-500" id="days-remaining">to reach your goal</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-400" data-i18n="spentToday">Spent Today</p>
+                    <h3 class="text-2xl font-bold" id="spent-today">$0</h3>
+                    <p class="text-xs" id="daily-status">On track</p>
+                </div>
             </div>
         </div>
 
@@ -732,9 +741,10 @@
                         
                         <div>
                             <label class="block text-sm text-gray-400 mb-2" data-i18n="type">Type</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setTransactionType('expense')" id="btn-expense" class="py-2 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 font-semibold transition-all" data-i18n="expense">Expense</button>
-                                <button onclick="setTransactionType('income')" id="btn-income" class="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all" data-i18n="incomeBtn">Income</button>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="setTransactionType('expense')" id="btn-expense" class="py-2 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 font-semibold transition-all text-xs" data-i18n="expense">Expense</button>
+                                <button onclick="setTransactionType('income')" id="btn-income" class="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all text-xs" data-i18n="incomeBtn">Income</button>
+                                <button onclick="setTransactionType('saveToGoal')" id="btn-saveToGoal" class="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all text-xs" data-i18n="saveToGoal">Save to Goal</button>
                             </div>
                         </div>
                         
@@ -788,7 +798,7 @@
                 email: "Email Address",
                 password: "Password",
                 deleteConfirm: "Delete Transaction?",
-                deleteDesc: "This will remove the transaction and reverse its effect on your balance. This action cannot be undone.",
+                deleteDesc: "This will remove the transaction and reverse its effect on your balances. This action cannot be undone.",
                 cancel: "Cancel",
                 delete: "Delete",
                 addBank: "Add Bank",
@@ -812,8 +822,10 @@
                 patternDetection: "Pattern detection & behavioral insights",
                 welcome: "Welcome",
                 aiMonitoring: "AI is monitoring your spending patterns",
-                totalSavings: "Total Savings",
-                setGoalToSee: "Set a savings goal to see progress",
+                availableBalance: "Available Balance",
+                whatYouCanSpend: "What you can spend now",
+                savingsBalance: "Savings Balance",
+                reservedForGoals: "Reserved for goals",
                 setBudgetBtn: "Set Budget",
                 clickToSet: "Click to set budget",
                 currentStreak: "Current Streak",
@@ -851,6 +863,7 @@
                 type: "Type",
                 expense: "Expense",
                 incomeBtn: "Income",
+                saveToGoal: "Save to Goal",
                 addTransaction: "Add Transaction",
                 recentActivity: "Recent Activity",
                 swipeToDelete: "Swipe to delete",
@@ -870,7 +883,7 @@
                 email: "E-mail",
                 password: "Senha",
                 deleteConfirm: "Excluir Transação?",
-                deleteDesc: "Isso removerá a transação e reverterá seu efeito no saldo. Esta ação não pode ser desfeita.",
+                deleteDesc: "Isso removerá a transação e reverterá seu efeito nos saldos. Esta ação não pode ser desfeita.",
                 cancel: "Cancelar",
                 delete: "Excluir",
                 addBank: "Adicionar Banco",
@@ -894,8 +907,10 @@
                 patternDetection: "Detecção de padrões e insights comportamentais",
                 welcome: "Bem-vindo",
                 aiMonitoring: "A IA está monitorando seus padrões de gastos",
-                totalSavings: "Economia Total",
-                setGoalToSee: "Defina uma meta para ver o progresso",
+                availableBalance: "Saldo Disponível",
+                whatYouCanSpend: "O que você pode gastar agora",
+                savingsBalance: "Saldo de Economia",
+                reservedForGoals: "Reservado para metas",
                 setBudgetBtn: "Definir Orçamento",
                 clickToSet: "Clique para definir orçamento",
                 currentStreak: "Sequência Atual",
@@ -933,6 +948,7 @@
                 type: "Tipo",
                 expense: "Despesa",
                 incomeBtn: "Receita",
+                saveToGoal: "Guardar na Meta",
                 addTransaction: "Adicionar Transação",
                 recentActivity: "Atividade Recente",
                 swipeToDelete: "Deslize para excluir",
@@ -1028,18 +1044,19 @@
             }
         }
 
-        let savings = 0;
+        // NEW FINANCIAL MODEL - Clear separation of concerns
+        let totalIncome = 0;           // Sum of all income transactions (lifetime)
+        let availableBalance = 0;      // Cash available to spend = Income - Expenses - Moved to Savings
+        let savingsBalance = 0;        // Money reserved for goals (locked)
         let currentUser = null;
         let transactions = [];
         let spendingChart = null;
-        let savingsChart = null;
         let monthlyBudget = 0;
-        let budgetSpent = 0;
+        let budgetSpent = 0;           // Only tracks expenses, NOT savings transfers
         let savingsGoal = { 
             amount: 0, 
             deadline: null, 
             dailyLimit: 0, 
-            currentSavings: 0,
             name: '',
             description: '',
             icon: 'fa-plane'
@@ -1047,6 +1064,8 @@
         let alertShown = { eighty: false, breached: false };
         let transactionToDelete = null;
         let dateFilter = { start: null, end: null };
+        let currentTransactionType = 'expense';
+        let streakCount = 0;
         
         let aiPatterns = {
             spendingVelocity: [],
@@ -1085,12 +1104,20 @@
         }
 
         function updateAllDisplays() {
-            updateSavingsDisplay();
+            updateBalanceDisplays();
             updateBudgetDisplay();
             updateDailySpending();
             updateSavingsGoalDisplay();
             updateTransactionsUI();
             updateChartWithData();
+        }
+
+        function updateBalanceDisplays() {
+            // Available Balance = Income - Expenses - Moved to Savings
+            document.getElementById('available-balance').textContent = formatMoney(availableBalance);
+            
+            // Savings Balance = Reserved money for goals
+            document.getElementById('savings-balance').textContent = formatMoney(savingsBalance);
         }
 
         function initDatePicker() {
@@ -1144,12 +1171,22 @@
             
             const transaction = transactions[index];
             
+            // Reverse the transaction based on type
             if (transaction.type === 'income') {
-                savings -= transaction.amount;
-                savingsGoal.currentSavings -= transaction.amount;
-            } else {
-                savings += transaction.amount;
+                // Was: +Available, +TotalIncome
+                // Reverse: -Available, -TotalIncome
+                availableBalance -= transaction.amount;
+                totalIncome -= transaction.amount;
+            } else if (transaction.type === 'expense') {
+                // Was: -Available, +BudgetSpent
+                // Reverse: +Available, -BudgetSpent
+                availableBalance += transaction.amount;
                 budgetSpent -= transaction.amount;
+            } else if (transaction.type === 'saveToGoal') {
+                // Was: -Available, +SavingsBalance
+                // Reverse: +Available, -SavingsBalance
+                availableBalance += transaction.amount;
+                savingsBalance -= transaction.amount;
             }
             
             transactions.splice(index, 1);
@@ -1333,8 +1370,8 @@
                 });
             }
             
-            if (savingsGoal.amount > 0 && savingsGoal.currentSavings < savingsGoal.amount) {
-                const remaining = savingsGoal.amount - savingsGoal.currentSavings;
+            if (savingsGoal.amount > 0 && savingsBalance < savingsGoal.amount) {
+                const remaining = savingsGoal.amount - savingsBalance;
                 const daysLeft = Math.max(1, Math.ceil((new Date(savingsGoal.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
                 const dailyNeeded = remaining / daysLeft;
                 
@@ -1521,8 +1558,7 @@
             
             savingsGoal = { ...savingsGoal, name, description, icon, amount, deadline, dailyLimit: 0 };
             calculateDailyLimit();
-            updateSavingsDisplay();
-            updateSavingsGoalDisplay();
+            updateAllDisplays();
             closeSavingsGoalModal();
             showNotification(currentLanguage === 'pt' ? 'Meta Definida' : 'Goal Set', `${name}: ${formatMoney(amount)}`, 'success');
             runAIAnalysis();
@@ -1549,13 +1585,13 @@
             
             document.getElementById('goal-target-display').textContent = formatMoney(savingsGoal.amount);
             document.getElementById('goal-date-display').textContent = new Date(savingsGoal.deadline).toLocaleDateString(currencyConfig[currentCurrency].locale, { month: 'short', year: 'numeric' });
-            document.getElementById('goal-current-display').textContent = formatMoney(savingsGoal.currentSavings);
+            document.getElementById('goal-current-display').textContent = formatMoney(savingsBalance); // Use savingsBalance, not savingsGoal.currentSavings
             
-            const percentage = Math.min(100, Math.max(0, (savingsGoal.currentSavings / savingsGoal.amount) * 100));
+            const percentage = Math.min(100, Math.max(0, (savingsBalance / savingsGoal.amount) * 100)); // Use savingsBalance
             document.getElementById('goal-progress-text').textContent = `${percentage.toFixed(1)}%`;
             document.getElementById('goal-progress-bar-main').style.width = `${percentage}%`;
             
-            const remaining = savingsGoal.amount - savingsGoal.currentSavings;
+            const remaining = savingsGoal.amount - savingsBalance; // Use savingsBalance
             document.getElementById('goal-amount-remaining').textContent = `${formatMoney(remaining)} ${currentLanguage === 'pt' ? 'restando' : 'remaining'}`;
             
             const today = new Date();
@@ -1582,7 +1618,7 @@
             const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
             const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
             
-            const dailySavingsRequired = (savingsGoal.amount - savingsGoal.currentSavings) / daysLeft;
+            const dailySavingsRequired = (savingsGoal.amount - savingsBalance) / daysLeft; // Use savingsBalance
             const dailySpendLimit = Math.max(0, (monthlyBudget - budgetSpent) / daysRemaining - dailySavingsRequired);
             
             savingsGoal.dailyLimit = dailySpendLimit;
@@ -1697,54 +1733,6 @@
             }
             
             checkBudgetAlerts();
-        }
-
-        function updateSavingsDisplay() {
-            const savingsEl = document.getElementById('total-savings');
-            const goalText = document.getElementById('savings-goal-text');
-            
-            savingsEl.textContent = formatMoney(savingsGoal.currentSavings);
-            
-            if (savingsGoal.amount > 0) {
-                const percent = Math.min((savingsGoal.currentSavings / savingsGoal.amount) * 100, 100);
-                goalText.textContent = `${currentLanguage === 'pt' ? 'Meta' : 'Goal'}: ${formatMoney(savingsGoal.amount)} (${percent.toFixed(0)}%)`;
-                goalText.className = 'text-sm mt-1 ' + (percent >= 100 ? 'text-emerald-400 font-bold' : 'text-gray-400');
-                updateSavingsChart(percent);
-            }
-        }
-
-        function updateSavingsChart(percent) {
-            const container = document.getElementById('savings-chart-container');
-            
-            if (savingsChart) {
-                savingsChart.destroy();
-            }
-            
-            container.innerHTML = '<canvas id="savingsChart"></canvas>';
-            const ctx = document.getElementById('savingsChart').getContext('2d');
-            
-            savingsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: [currentLanguage === 'pt' ? 'Economizado' : 'Saved', currentLanguage === 'pt' ? 'Restante' : 'Remaining'],
-                    datasets: [{
-                        data: [percent, 100 - percent],
-                        backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(75, 85, 99, 0.3)'],
-                        borderWidth: 0,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { display: false, max: 100 },
-                        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } }
-                    }
-                }
-            });
         }
 
         function switchAuthMode(mode) {
@@ -1898,13 +1886,19 @@
             currentTransactionType = type;
             const expenseBtn = document.getElementById('btn-expense');
             const incomeBtn = document.getElementById('btn-income');
+            const saveToGoalBtn = document.getElementById('btn-saveToGoal');
+            
+            // Reset all
+            expenseBtn.className = 'py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all text-xs';
+            incomeBtn.className = 'py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all text-xs';
+            saveToGoalBtn.className = 'py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all text-xs';
             
             if (type === 'expense') {
-                expenseBtn.className = 'py-2 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 font-semibold transition-all';
-                incomeBtn.className = 'py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all';
-            } else {
-                expenseBtn.className = 'py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all';
-                incomeBtn.className = 'py-2 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-semibold transition-all';
+                expenseBtn.className = 'py-2 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 font-semibold transition-all text-xs';
+            } else if (type === 'income') {
+                incomeBtn.className = 'py-2 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-semibold transition-all text-xs';
+            } else if (type === 'saveToGoal') {
+                saveToGoalBtn.className = 'py-2 rounded-lg bg-blue-500/20 border border-blue-500 text-blue-400 font-semibold transition-all text-xs';
             }
         }
 
@@ -1918,31 +1912,54 @@
                 return;
             }
 
-            const isIncome = currentTransactionType === 'income';
-            const merchant = isIncome ? (currentLanguage === 'pt' ? 'Receita Manual' : 'Manual Income') : `${category.charAt(0).toUpperCase() + category.slice(1)}`;
             const transactionDate = dateInput ? new Date(dateInput) : new Date();
+            let merchant = '';
             
-            transactions.unshift({
+            // Determine merchant name based on type
+            if (currentTransactionType === 'income') {
+                merchant = currentLanguage === 'pt' ? 'Receita Manual' : 'Manual Income';
+            } else if (currentTransactionType === 'saveToGoal') {
+                merchant = currentLanguage === 'pt' ? 'Guardar na Meta' : 'Save to Goal';
+            } else {
+                merchant = `${category.charAt(0).toUpperCase() + category.slice(1)}`;
+            }
+            
+            const transaction = {
                 id: Date.now(),
                 merchant,
                 amount,
                 category,
                 date: transactionDate.toISOString().split('T')[0],
                 type: currentTransactionType
-            });
+            };
             
-            if (isIncome) {
-                savings += amount;
-                savingsGoal.currentSavings += amount;
-            } else {
-                savings -= amount;
+            transactions.unshift(transaction);
+            
+            // Apply transaction based on type
+            if (currentTransactionType === 'income') {
+                // Income: +Available, +TotalIncome
+                availableBalance += amount;
+                totalIncome += amount;
+            } else if (currentTransactionType === 'expense') {
+                // Expense: -Available, +BudgetSpent
+                availableBalance -= amount;
                 budgetSpent += amount;
+            } else if (currentTransactionType === 'saveToGoal') {
+                // Save to Goal: -Available, +SavingsBalance (NO budget impact!)
+                if (amount > availableBalance) {
+                    showNotification(currentLanguage === 'pt' ? 'Erro' : 'Error', currentLanguage === 'pt' ? 'Saldo insuficiente' : 'Insufficient available balance', 'error');
+                    transactions.shift(); // Remove the transaction
+                    return;
+                }
+                availableBalance -= amount;
+                savingsBalance += amount;
             }
             
             updateAllDisplays();
             runAIAnalysis();
             
-            if (!isIncome && savingsGoal.dailyLimit > 0) {
+            // Check daily limit for expenses
+            if (currentTransactionType === 'expense' && savingsGoal.dailyLimit > 0) {
                 const today = new Date().toDateString();
                 const spentToday = transactions
                     .filter(t => t.type === 'expense' && new Date(t.date).toDateString() === today)
@@ -1990,18 +2007,34 @@
                 food: 'rose', shopping: 'blue', transport: 'emerald',
                 entertainment: 'purple', bills: 'yellow', others: 'gray'
             };
+            const typeColors = {
+                income: 'emerald',
+                expense: 'rose',
+                saveToGoal: 'blue'
+            };
             
             container.innerHTML = filteredTransactions.slice(0, 10).map(t => {
                 const color = categoryColors[t.category];
                 const icon = categoryIcons[t.category];
+                const typeColor = typeColors[t.type];
                 const date = new Date(t.date);
                 const dateStr = date.toLocaleDateString(currencyConfig[currentCurrency].locale, { month: 'short', day: 'numeric' });
+                
+                // Format amount display based on type
+                let amountDisplay = '';
+                if (t.type === 'income') {
+                    amountDisplay = `<span class="text-emerald-400 font-bold">+${formatMoney(t.amount)}</span>`;
+                } else if (t.type === 'saveToGoal') {
+                    amountDisplay = `<span class="text-blue-400 font-bold">→ ${formatMoney(t.amount)}</span>`;
+                } else {
+                    amountDisplay = `<span class="text-rose-400 font-bold">-${formatMoney(t.amount)}</span>`;
+                }
                 
                 return `
                     <div class="transaction-item flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors slide-in group">
                         <div class="flex items-center gap-3 flex-1">
-                            <div class="w-10 h-10 rounded-full bg-${color}-500/20 flex items-center justify-center">
-                                <i class="fas ${icon} text-${color}-400"></i>
+                            <div class="w-10 h-10 rounded-full bg-${typeColor}-500/20 flex items-center justify-center">
+                                <i class="fas ${t.type === 'income' ? 'fa-arrow-down' : t.type === 'saveToGoal' ? 'fa-piggy-bank' : icon} text-${typeColor}-400"></i>
                             </div>
                             <div>
                                 <p class="font-semibold text-sm">${t.merchant}</p>
@@ -2009,7 +2042,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'} font-bold">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</span>
+                            ${amountDisplay}
                             <button onclick="openDeleteModal(${t.id})" class="delete-btn w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center text-red-400 transition-all">
                                 <i class="fas fa-trash-alt text-sm"></i>
                             </button>

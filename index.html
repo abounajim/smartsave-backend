@@ -130,6 +130,14 @@
             font-size: 1.5rem;
             margin-right: 0.75rem;
         }
+
+        /* Category selector visibility */
+        .category-selector-container {
+            transition: all 0.3s ease;
+        }
+        .category-selector-container.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="text-white min-h-screen overflow-x-hidden">
@@ -727,15 +735,16 @@
                             <input type="date" id="transaction-date" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors text-white">
                         </div>
                         
-                        <div>
+                        <!-- Category selector - only visible for expenses -->
+                        <div id="category-selector-container" class="category-selector-container">
                             <label class="block text-sm text-gray-400 mb-2" data-i18n="category">Category</label>
                             <select id="transaction-category" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors">
-                                <option value="food">🍔 <span data-i18n="food">Food & Dining</span></option>
-                                <option value="shopping">🛍️ <span data-i18n="shopping">Shopping</span></option>
-                                <option value="transport">🚗 <span data-i18n="transport">Transport</span></option>
-                                <option value="entertainment">🎬 <span data-i18n="entertainment">Entertainment</span></option>
-                                <option value="bills">💡 <span data-i18n="bills">Bills</span></option>
-                                <option value="income">💰 <span data-i18n="income">Income</span></option>
+                                <option value="food">🍔 Food & Dining</option>
+                                <option value="shopping">🛍️ Shopping</option>
+                                <option value="transport">🚗 Transport</option>
+                                <option value="entertainment">🎬 Entertainment</option>
+                                <option value="bills">💡 Bills</option>
+                                <option value="others">📦 Others</option>
                             </select>
                         </div>
                         
@@ -859,6 +868,7 @@
                 transport: "Transport",
                 entertainment: "Entertainment",
                 bills: "Bills",
+                others: "Others",
                 income: "Income",
                 type: "Type",
                 expense: "Expense",
@@ -944,6 +954,7 @@
                 transport: "Transporte",
                 entertainment: "Entretenimento",
                 bills: "Contas",
+                others: "Outros",
                 income: "Receita",
                 type: "Tipo",
                 expense: "Despesa",
@@ -1075,6 +1086,46 @@
             predictions: {}
         };
 
+        // CONSISTENT CATEGORY CONFIGURATION - Used by both chart and list
+        const categoryConfig = {
+            food: { 
+                color: 'rose', 
+                chartColor: 'rgba(244, 63, 94, 0.8)', // rose-500
+                icon: 'fa-utensils', 
+                label: { en: 'Food & Dining', pt: 'Comida & Restaurantes' }
+            },
+            shopping: { 
+                color: 'blue', 
+                chartColor: 'rgba(59, 130, 246, 0.8)', // blue-500
+                icon: 'fa-shopping-bag', 
+                label: { en: 'Shopping', pt: 'Compras' }
+            },
+            transport: { 
+                color: 'emerald', 
+                chartColor: 'rgba(16, 185, 129, 0.8)', // emerald-500
+                icon: 'fa-bus', 
+                label: { en: 'Transport', pt: 'Transporte' }
+            },
+            entertainment: { 
+                color: 'purple', 
+                chartColor: 'rgba(139, 92, 246, 0.8)', // purple-500
+                icon: 'fa-film', 
+                label: { en: 'Entertainment', pt: 'Entretenimento' }
+            },
+            bills: { 
+                color: 'yellow', 
+                chartColor: 'rgba(245, 158, 11, 0.8)', // yellow-500
+                icon: 'fa-bolt', 
+                label: { en: 'Bills', pt: 'Contas' }
+            },
+            others: { 
+                color: 'gray', 
+                chartColor: 'rgba(107, 114, 128, 0.8)', // gray-500
+                icon: 'fa-receipt', 
+                label: { en: 'Others', pt: 'Outros' }
+            }
+        };
+
         function formatMoney(amount) {
             const config = currencyConfig[currentCurrency];
             return new Intl.NumberFormat(config.locale, { 
@@ -1101,6 +1152,27 @@
             if (nameInput) nameInput.placeholder = lang === 'pt' ? 'João Silva' : 'John Doe';
             if (goalNameInput) goalNameInput.placeholder = lang === 'pt' ? 'Ex: Viagem para o Japão' : 'e.g., Trip to Japan';
             if (goalDescInput) goalDescInput.placeholder = lang === 'pt' ? 'Férias dos sonhos com amigos...' : 'Dream vacation with friends...';
+            
+            // Update category options
+            updateCategoryOptions();
+        }
+
+        function updateCategoryOptions() {
+            const select = document.getElementById('transaction-category');
+            if (!select) return;
+            
+            const currentValue = select.value;
+            select.innerHTML = '';
+            
+            Object.entries(categoryConfig).forEach(([key, config]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                const icon = key === 'food' ? '🍔' : key === 'shopping' ? '🛍️' : key === 'transport' ? '🚗' : key === 'entertainment' ? '🎬' : key === 'bills' ? '💡' : '📦';
+                option.textContent = `${icon} ${config.label[currentLanguage]}`;
+                select.appendChild(option);
+            });
+            
+            select.value = currentValue || 'food';
         }
 
         function updateAllDisplays() {
@@ -1140,6 +1212,9 @@
                 savingsDateInput.value = sixMonths.toISOString().split('T')[0];
                 savingsDateInput.min = today;
             }
+            
+            // Initialize category options
+            updateCategoryOptions();
         }
 
         function selectGoalIcon(element) {
@@ -1308,11 +1383,12 @@
             
             if (topCategory) {
                 const percentage = ((topCategory[1].total / expenses.reduce((s, t) => s + t.amount, 0)) * 100).toFixed(0);
+                const config = categoryConfig[topCategory[0]];
                 insights.push({
                     icon: 'fa-chart-pie',
-                    color: 'purple',
+                    color: config.color,
                     title: currentLanguage === 'pt' ? 'Categoria Principal' : 'Top Spending Category',
-                    text: `${topCategory[0].charAt(0).toUpperCase() + topCategory[0].slice(1)} ${currentLanguage === 'pt' ? 'representa' : 'accounts for'} ${percentage}% ${currentLanguage === 'pt' ? 'dos seus gastos' : 'of your spending'} (${formatMoney(topCategory[1].total)}).`,
+                    text: `${config.label[currentLanguage]} ${currentLanguage === 'pt' ? 'representa' : 'accounts for'} ${percentage}% ${currentLanguage === 'pt' ? 'dos seus gastos' : 'of your spending'} (${formatMoney(topCategory[1].total)}).`,
                     action: percentage > 40 ? (currentLanguage === 'pt' ? 'Considere reduzir esta categoria.' : 'Consider reducing this category.') : null
                 });
             }
@@ -1388,10 +1464,10 @@
             
             const container = document.getElementById('ai-insights-container');
             container.innerHTML = insights.map(i => `
-                <div class="p-4 rounded-lg ${i.color === 'red' ? 'bg-red-500/10 border border-red-500/30' : i.color === 'yellow' ? 'bg-yellow-500/10 border border-yellow-500/30' : i.color === 'emerald' ? 'bg-emerald-500/10 border border-emerald-500/30' : i.color === 'blue' ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-purple-500/10 border border-purple-500/30'} flex items-start gap-3 slide-in pattern-card">
-                    <i class="fas ${i.icon} ${i.color === 'red' ? 'text-red-400' : i.color === 'yellow' ? 'text-yellow-400' : i.color === 'emerald' ? 'text-emerald-400' : i.color === 'blue' ? 'text-blue-400' : 'text-purple-400'} mt-1"></i>
+                <div class="p-4 rounded-lg ${i.color === 'red' ? 'bg-red-500/10 border border-red-500/30' : i.color === 'yellow' ? 'bg-yellow-500/10 border border-yellow-500/30' : i.color === 'emerald' ? 'bg-emerald-500/10 border border-emerald-500/30' : i.color === 'blue' ? 'bg-blue-500/10 border border-blue-500/30' : i.color === 'orange' ? 'bg-orange-500/10 border border-orange-500/30' : 'bg-purple-500/10 border border-purple-500/30'} flex items-start gap-3 slide-in pattern-card">
+                    <i class="fas ${i.icon} ${i.color === 'red' ? 'text-red-400' : i.color === 'yellow' ? 'text-yellow-400' : i.color === 'emerald' ? 'text-emerald-400' : i.color === 'blue' ? 'text-blue-400' : i.color === 'orange' ? 'text-orange-400' : 'text-purple-400'} mt-1"></i>
                     <div class="flex-1">
-                        <p class="font-semibold ${i.color === 'red' ? 'text-red-200' : i.color === 'yellow' ? 'text-yellow-200' : i.color === 'emerald' ? 'text-emerald-200' : i.color === 'blue' ? 'text-blue-200' : 'text-purple-200'}">${i.title}</p>
+                        <p class="font-semibold ${i.color === 'red' ? 'text-red-200' : i.color === 'yellow' ? 'text-yellow-200' : i.color === 'emerald' ? 'text-emerald-200' : i.color === 'blue' ? 'text-blue-200' : i.color === 'orange' ? 'text-orange-200' : 'text-purple-200'}">${i.title}</p>
                         <p class="text-sm text-gray-300">${i.text}</p>
                         ${i.action ? `<p class="text-xs mt-2 ${i.color === 'red' ? 'text-red-300' : 'text-emerald-300'} font-medium"><i class="fas fa-lightbulb mr-1"></i>${i.action}</p>` : ''}
                     </div>
@@ -1432,15 +1508,16 @@
                 Object.entries(aiPatterns.categoryTrends)
                     .sort((a, b) => b[1].total - a[1].total)
                     .forEach(([cat, data]) => {
+                        const config = categoryConfig[cat];
                         const avg = data.total / data.count;
                         const freq = data.count > 3 ? (currentLanguage === 'pt' ? 'frequente' : 'frequent') : data.count === 1 ? (currentLanguage === 'pt' ? 'único' : 'one-time') : (currentLanguage === 'pt' ? 'ocasional' : 'occasional');
                         html += `
                             <div class="glass rounded-lg p-3 flex justify-between items-center">
                                 <div>
-                                    <p class="font-semibold capitalize">${cat}</p>
+                                    <p class="font-semibold">${config.label[currentLanguage]}</p>
                                     <p class="text-xs text-gray-400">${data.count} ${currentLanguage === 'pt' ? 'transações' : 'transactions'} • ${freq} • ${currentLanguage === 'pt' ? 'média' : 'avg'} ${formatMoney(avg)}</p>
                                 </div>
-                                <p class="font-bold text-purple-400">${formatMoney(data.total)}</p>
+                                <p class="font-bold text-${config.color}-400">${formatMoney(data.total)}</p>
                             </div>
                         `;
                     });
@@ -1815,30 +1892,41 @@
             const chartContainer = document.getElementById('chart-container');
             chartContainer.innerHTML = '<canvas id="spendingChart"></canvas>';
             
-            const labels = Object.keys(breakdown).map(c => {
-                const catNames = currentLanguage === 'pt' ? {
-                    food: 'Comida', shopping: 'Compras', transport: 'Transporte',
-                    entertainment: 'Entretenimento', bills: 'Contas', others: 'Outros'
-                } : {
-                    food: 'Food', shopping: 'Shopping', transport: 'Transport',
-                    entertainment: 'Entertainment', bills: 'Bills', others: 'Others'
-                };
-                return catNames[c] || c.charAt(0).toUpperCase() + c.slice(1);
-            });
+            // Sort categories by amount for consistent ordering
+            const sortedCategories = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
             
-            const data = Object.values(breakdown);
-            const colors = ['rgba(244, 63, 94, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(245, 158, 11, 0.8)'];
+            const labels = sortedCategories.map(([cat]) => categoryConfig[cat].label[currentLanguage]);
+            const data = sortedCategories.map(([, amount]) => amount);
+            const colors = sortedCategories.map(([cat]) => categoryConfig[cat].chartColor);
             
             if (spendingChart) spendingChart.destroy();
             
             const ctx = document.getElementById('spendingChart').getContext('2d');
             spendingChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 10 }] },
+                data: { 
+                    labels, 
+                    datasets: [{ 
+                        data, 
+                        backgroundColor: colors, 
+                        borderWidth: 0, 
+                        hoverOffset: 10 
+                    }] 
+                },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', padding: 15, usePointStyle: true, font: { size: 11 } } } },
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { 
+                                color: '#9ca3af', 
+                                padding: 15, 
+                                usePointStyle: true, 
+                                font: { size: 11 } 
+                            } 
+                        } 
+                    },
                     cutout: '60%'
                 }
             });
@@ -1851,35 +1939,28 @@
             if (!container) return;
             
             const total = Object.values(breakdownData).reduce((a, b) => a + b, 0);
-            const colors = {
-                food: { color: 'rose', icon: 'fa-utensils', label: currentLanguage === 'pt' ? 'Comida' : 'Food & Dining' },
-                shopping: { color: 'blue', icon: 'fa-shopping-bag', label: currentLanguage === 'pt' ? 'Compras' : 'Shopping' },
-                transport: { color: 'emerald', icon: 'fa-bus', label: currentLanguage === 'pt' ? 'Transporte' : 'Transport' },
-                entertainment: { color: 'purple', icon: 'fa-film', label: currentLanguage === 'pt' ? 'Entretenimento' : 'Entertainment' },
-                bills: { color: 'yellow', icon: 'fa-bolt', label: currentLanguage === 'pt' ? 'Contas' : 'Bills' },
-                others: { color: 'gray', icon: 'fa-receipt', label: currentLanguage === 'pt' ? 'Outros' : 'Others' }
-            };
             
-            container.innerHTML = Object.entries(breakdownData)
-                .sort((a, b) => b[1] - a[1])
-                .map(([cat, amount]) => {
-                    const config = colors[cat] || colors.others;
-                    const percent = total > 0 ? ((amount / total) * 100).toFixed(0) : 0;
-                    return `
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-gray-800/50 slide-in">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-${config.color}-500/20 flex items-center justify-center">
-                                    <i class="fas ${config.icon} text-${config.color}-400"></i>
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-sm">${config.label}</p>
-                                    <p class="text-xs text-gray-400">${percent}% ${currentLanguage === 'pt' ? 'dos gastos' : 'of spending'}</p>
-                                </div>
+            // Sort by amount descending to match chart order
+            const sortedEntries = Object.entries(breakdownData).sort((a, b) => b[1] - a[1]);
+            
+            container.innerHTML = sortedEntries.map(([cat, amount]) => {
+                const config = categoryConfig[cat];
+                const percent = total > 0 ? ((amount / total) * 100).toFixed(0) : 0;
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-800/50 slide-in">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-${config.color}-500/20 flex items-center justify-center">
+                                <i class="fas ${config.icon} text-${config.color}-400"></i>
                             </div>
-                            <span class="font-bold text-${config.color}-400">${formatMoney(amount)}</span>
+                            <div>
+                                <p class="font-semibold text-sm">${config.label[currentLanguage]}</p>
+                                <p class="text-xs text-gray-400">${percent}% ${currentLanguage === 'pt' ? 'dos gastos' : 'of spending'}</p>
+                            </div>
                         </div>
-                    `;
-                }).join('');
+                        <span class="font-bold text-${config.color}-400">${formatMoney(amount)}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         function setTransactionType(type) {
@@ -1887,6 +1968,7 @@
             const expenseBtn = document.getElementById('btn-expense');
             const incomeBtn = document.getElementById('btn-income');
             const saveToGoalBtn = document.getElementById('btn-saveToGoal');
+            const categoryContainer = document.getElementById('category-selector-container');
             
             // Reset all
             expenseBtn.className = 'py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-semibold transition-all text-xs';
@@ -1895,16 +1977,23 @@
             
             if (type === 'expense') {
                 expenseBtn.className = 'py-2 rounded-lg bg-rose-500/20 border border-rose-500 text-rose-400 font-semibold transition-all text-xs';
+                // Show category selector for expenses
+                categoryContainer.classList.remove('hidden');
             } else if (type === 'income') {
                 incomeBtn.className = 'py-2 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-semibold transition-all text-xs';
+                // Hide category selector for income
+                categoryContainer.classList.add('hidden');
             } else if (type === 'saveToGoal') {
                 saveToGoalBtn.className = 'py-2 rounded-lg bg-blue-500/20 border border-blue-500 text-blue-400 font-semibold transition-all text-xs';
+                // Hide category selector for save to goal
+                categoryContainer.classList.add('hidden');
             }
         }
 
         function addTransaction() {
             const amount = parseFloat(document.getElementById('transaction-amount').value);
-            const category = document.getElementById('transaction-category').value;
+            const categorySelect = document.getElementById('transaction-category');
+            const category = categorySelect ? categorySelect.value : 'others';
             const dateInput = document.getElementById('transaction-date').value;
             
             if (!amount || amount <= 0) {
@@ -1921,14 +2010,16 @@
             } else if (currentTransactionType === 'saveToGoal') {
                 merchant = currentLanguage === 'pt' ? 'Guardar na Meta' : 'Save to Goal';
             } else {
-                merchant = `${category.charAt(0).toUpperCase() + category.slice(1)}`;
+                // Expense uses category name
+                const config = categoryConfig[category];
+                merchant = config ? config.label[currentLanguage] : category;
             }
             
             const transaction = {
                 id: Date.now(),
                 merchant,
                 amount,
-                category,
+                category: currentTransactionType === 'expense' ? category : null, // Only expenses have categories
                 date: transactionDate.toISOString().split('T')[0],
                 type: currentTransactionType
             };
@@ -1999,24 +2090,21 @@
                 return;
             }
             
-            const categoryIcons = {
-                food: 'fa-coffee', shopping: 'fa-shopping-bag', transport: 'fa-bus',
-                entertainment: 'fa-film', bills: 'fa-bolt', others: 'fa-receipt'
-            };
-            const categoryColors = {
-                food: 'rose', shopping: 'blue', transport: 'emerald',
-                entertainment: 'purple', bills: 'yellow', others: 'gray'
-            };
             const typeColors = {
                 income: 'emerald',
                 expense: 'rose',
                 saveToGoal: 'blue'
             };
             
+            const typeIcons = {
+                income: 'fa-arrow-down',
+                expense: 'fa-shopping-cart',
+                saveToGoal: 'fa-piggy-bank'
+            };
+            
             container.innerHTML = filteredTransactions.slice(0, 10).map(t => {
-                const color = categoryColors[t.category];
-                const icon = categoryIcons[t.category];
                 const typeColor = typeColors[t.type];
+                const typeIcon = typeIcons[t.type];
                 const date = new Date(t.date);
                 const dateStr = date.toLocaleDateString(currencyConfig[currentCurrency].locale, { month: 'short', day: 'numeric' });
                 
@@ -2030,15 +2118,23 @@
                     amountDisplay = `<span class="text-rose-400 font-bold">-${formatMoney(t.amount)}</span>`;
                 }
                 
+                // Only show category for expenses
+                const categoryDisplay = t.type === 'expense' && t.category ? `
+                    <span class="text-${categoryConfig[t.category].color}-400 capitalize text-xs ml-2">
+                        <i class="fas ${categoryConfig[t.category].icon} mr-1"></i>
+                        ${categoryConfig[t.category].label[currentLanguage]}
+                    </span>
+                ` : '';
+                
                 return `
                     <div class="transaction-item flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors slide-in group">
                         <div class="flex items-center gap-3 flex-1">
                             <div class="w-10 h-10 rounded-full bg-${typeColor}-500/20 flex items-center justify-center">
-                                <i class="fas ${t.type === 'income' ? 'fa-arrow-down' : t.type === 'saveToGoal' ? 'fa-piggy-bank' : icon} text-${typeColor}-400"></i>
+                                <i class="fas ${typeIcon} text-${typeColor}-400"></i>
                             </div>
                             <div>
                                 <p class="font-semibold text-sm">${t.merchant}</p>
-                                <p class="text-xs text-gray-500">${dateStr} • <span class="text-${color}-400 capitalize">${t.category}</span></p>
+                                <p class="text-xs text-gray-500">${dateStr}${categoryDisplay}</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">

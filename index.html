@@ -1,5 +1,3 @@
-html
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +7,8 @@ html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- SheetJS for Excel export -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>
 :root {
@@ -104,6 +104,31 @@ body::before {
 .nav-tab { font-family: var(--font-display); padding: 0.4rem 0.9rem; background: none; border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--ash); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
 .nav-tab:hover { color: var(--mist); border-color: var(--border); }
 .nav-tab.active { color: var(--ember); border-color: var(--ember-border); background: var(--ember-dim); }
+
+/* EXPORT BUTTON */
+.export-btn {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gain);
+  background: var(--gain-dim);
+  border: 1px solid rgba(52,211,153,0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.export-btn:hover {
+  background: rgba(52,211,153,0.2);
+  border-color: var(--gain);
+  transform: translateY(-1px);
+}
+.export-btn i { font-size: 0.8rem; }
 
 /* DROPDOWN */
 .dropdown { position: relative; }
@@ -235,7 +260,7 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
 .insight-body { flex: 1; }
 .insight-title { font-size: 0.8rem; font-weight: 700; color: var(--white); margin-bottom: 0.25rem; }
 .insight-text { font-size: 0.78rem; color: var(--ash); line-height: 1.5; }
-.insight-cta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--gain); margin-top: 0.4rem; letter-spacing: 0.05em; }
+.insight-cta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--gain); margin-top: 0.4rem; }
 
 /* GOAL */
 .goal-hero { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.75rem; }
@@ -462,6 +487,7 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
 .panel:nth-child(3) { animation-delay: 0.15s; }
 .panel:nth-child(4) { animation-delay: 0.2s; }
 </style>
+<base target="_blank">
 </head>
 <body>
 <div class="ambient ambient-1"></div>
@@ -518,6 +544,10 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
     <div class="topbar-right">
       <div class="topbar-pill"><span class="dot"></span><span>AI Active</span></div>
       <div class="topbar-streak" id="streak-display" style="display:none"><i class="fas fa-fire"></i> <span id="streak-num">0</span>d Streak</div>
+      <!-- Excel Export Button -->
+      <button class="export-btn" onclick="exportToExcel()" title="Export Monthly Report to Excel">
+        <i class="fas fa-file-excel"></i> Export
+      </button>
       <div class="dropdown">
         <div class="topbar-avatar" id="avatar-btn"><span id="user-initial">U</span></div>
         <div class="dropdown-menu">
@@ -531,8 +561,7 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
       </div>
     </div>
   </nav>
-
-  <div class="layout">
+<div class="layout">
 
     <!-- ═══ DASHBOARD PAGE ═══ -->
     <div id="page-dashboard" class="page-section active">
@@ -2097,6 +2126,255 @@ function confetti() {
 // ════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════
+
+// ════════════════════════════════════════════
+//  EXCEL EXPORT FUNCTIONALITY
+// ════════════════════════════════════════════
+function exportToExcel() {
+  const txs = state.transactions;
+  if (txs.length === 0) {
+    toast('No Data', 'Add transactions before exporting', 'warning');
+    return;
+  }
+
+  // Group transactions by month
+  const monthlyData = {};
+  const allCategories = new Set();
+
+  txs.forEach(t => {
+    const date = new Date(t.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = {
+        label: monthLabel,
+        year: date.getFullYear(),
+        month: date.getMonth(),
+        categories: {},
+        income: 0,
+        expenses: 0,
+        savings: 0,
+        transactions: []
+      };
+    }
+
+    monthlyData[monthKey].transactions.push(t);
+
+    if (t.type === 'income') {
+      monthlyData[monthKey].income += t.amount;
+    } else if (t.type === 'expense') {
+      monthlyData[monthKey].expenses += t.amount;
+      const cat = t.category || 'others';
+      allCategories.add(cat);
+      monthlyData[monthKey].categories[cat] = (monthlyData[monthKey].categories[cat] || 0) + t.amount;
+    } else if (t.type === 'save') {
+      monthlyData[monthKey].savings += t.amount;
+    }
+  });
+
+  // Sort months chronologically
+  const sortedMonths = Object.keys(monthlyData).sort();
+
+  // Prepare workbook
+  const wb = XLSX.utils.book_new();
+  wb.Props = {
+    Title: "VAULT Financial Report",
+    Subject: "Monthly Spending Analysis",
+    Author: state.user?.name || "VAULT User",
+    CreatedDate: new Date()
+  };
+
+  // Sheet 1: Monthly Summary
+  const summaryData = [];
+  summaryData.push(['VAULT FINANCIAL REPORT', '', '', '', '', '']);
+  summaryData.push(['Generated:', new Date().toLocaleDateString(), '', '', '', '']);
+  summaryData.push(['User:', state.user?.name || 'Unknown', '', '', '', '']);
+  summaryData.push(['', '', '', '', '', '']);
+  summaryData.push(['MONTHLY SUMMARY', '', '', '', '', '']);
+  summaryData.push(['Month', 'Income', 'Expenses', 'Savings', 'Net Flow', 'Savings Rate']);
+
+  sortedMonths.forEach(monthKey => {
+    const m = monthlyData[monthKey];
+    const netFlow = m.income - m.expenses - m.savings;
+    const savingsRate = m.income > 0 ? ((m.savings / m.income) * 100).toFixed(1) + '%' : '0%';
+    summaryData.push([
+      m.label,
+      m.income,
+      m.expenses,
+      m.savings,
+      netFlow,
+      savingsRate
+    ]);
+  });
+
+  // Add totals row
+  const totalIncome = sortedMonths.reduce((s, k) => s + monthlyData[k].income, 0);
+  const totalExpenses = sortedMonths.reduce((s, k) => s + monthlyData[k].expenses, 0);
+  const totalSavings = sortedMonths.reduce((s, k) => s + monthlyData[k].savings, 0);
+  const totalNet = totalIncome - totalExpenses - totalSavings;
+  const avgSavingsRate = totalIncome > 0 ? ((totalSavings / totalIncome) * 100).toFixed(1) + '%' : '0%';
+
+  summaryData.push(['TOTALS', totalIncome, totalExpenses, totalSavings, totalNet, avgSavingsRate]);
+
+  const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, ws1, "Monthly Summary");
+
+  // Sheet 2: Category Breakdown by Month
+  const catData = [];
+  catData.push(['CATEGORY BREAKDOWN BY MONTH']);
+  catData.push(['']);
+
+  // Header row with months
+  const headerRow = ['Category'];
+  sortedMonths.forEach(k => headerRow.push(monthlyData[k].label));
+  headerRow.push('Total', '% of Expenses');
+  catData.push(headerRow);
+
+  // Category rows
+  const categoryTotals = {};
+  const sortedCats = Array.from(allCategories).sort();
+
+  sortedCats.forEach(cat => {
+    const row = [CATS[cat]?.label || cat];
+    let catTotal = 0;
+
+    sortedMonths.forEach(monthKey => {
+      const amount = monthlyData[monthKey].categories[cat] || 0;
+      row.push(amount);
+      catTotal += amount;
+    });
+
+    row.push(catTotal);
+    row.push(totalExpenses > 0 ? ((catTotal / totalExpenses) * 100).toFixed(1) + '%' : '0%');
+    catData.push(row);
+    categoryTotals[cat] = catTotal;
+  });
+
+  // Total row
+  const totalRow = ['TOTAL EXPENSES'];
+  sortedMonths.forEach(k => totalRow.push(monthlyData[k].expenses));
+  totalRow.push(totalExpenses, '100%');
+  catData.push(totalRow);
+
+  const ws2 = XLSX.utils.aoa_to_sheet(catData);
+  XLSX.utils.book_append_sheet(wb, ws2, "Category Breakdown");
+
+  // Sheet 3: Monthly Statistics
+  const statsData = [];
+  statsData.push(['DETAILED MONTHLY STATISTICS']);
+  statsData.push(['']);
+  statsData.push([
+    'Month', 'Total Transactions', 'Avg Transaction', 'Largest Expense', 
+    'Most Used Category', 'Daily Avg (Expenses)', 'Budget Status'
+  ]);
+
+  sortedMonths.forEach(monthKey => {
+    const m = monthlyData[monthKey];
+    const expenses = m.transactions.filter(t => t.type === 'expense');
+    const txCount = expenses.length;
+    const avgTx = txCount > 0 ? (m.expenses / txCount).toFixed(2) : 0;
+    const largest = txCount > 0 ? Math.max(...expenses.map(t => t.amount)) : 0;
+
+    // Find most used category
+    let maxCat = '-';
+    let maxCatAmount = 0;
+    Object.entries(m.categories).forEach(([cat, amount]) => {
+      if (amount > maxCatAmount) {
+        maxCatAmount = amount;
+        maxCat = CATS[cat]?.label || cat;
+      }
+    });
+
+    // Calculate daily average
+    const daysInMonth = new Date(m.year, m.month + 1, 0).getDate();
+    const dailyAvg = (m.expenses / daysInMonth).toFixed(2);
+
+    // Budget status
+    let budgetStatus = 'No Budget';
+    if (state.monthlyBudget > 0) {
+      const pct = (m.expenses / state.monthlyBudget) * 100;
+      if (pct > 100) budgetStatus = `Over by ${(pct - 100).toFixed(0)}%`;
+      else if (pct > 80) budgetStatus = `Warning (${pct.toFixed(0)}%)`;
+      else budgetStatus = `OK (${pct.toFixed(0)}%)`;
+    }
+
+    statsData.push([
+      m.label, txCount, parseFloat(avgTx), largest, maxCat, parseFloat(dailyAvg), budgetStatus
+    ]);
+  });
+
+  const ws3 = XLSX.utils.aoa_to_sheet(statsData);
+  XLSX.utils.book_append_sheet(wb, ws3, "Monthly Stats");
+
+  // Sheet 4: All Transactions (Raw Data)
+  const txData = [];
+  txData.push(['ALL TRANSACTIONS']);
+  txData.push(['']);
+  txData.push(['Date', 'Type', 'Category', 'Merchant', 'Amount', 'Month']);
+
+  const sortedTxs = [...txs].sort((a, b) => new Date(a.date) - new Date(b.date));
+  sortedTxs.forEach(t => {
+    const date = new Date(t.date);
+    const monthLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    txData.push([
+      t.date,
+      t.type,
+      t.category ? (CATS[t.category]?.label || t.category) : '-',
+      t.merchant,
+      t.amount,
+      monthLabel
+    ]);
+  });
+
+  const ws4 = XLSX.utils.aoa_to_sheet(txData);
+  XLSX.utils.book_append_sheet(wb, ws4, "All Transactions");
+
+  // Sheet 5: Recurring Expenses Summary
+  if (state.recurringExpenses.length > 0) {
+    const recData = [];
+    recData.push(['RECURRING EXPENSES SUMMARY']);
+    recData.push(['']);
+    recData.push(['Name', 'Category', 'Amount', 'Frequency', 'Monthly Equivalent', 'Yearly Cost', 'Status']);
+
+    const now = new Date();
+    state.recurringExpenses.forEach(r => {
+      const monthly = toMonthlyAmount(r.amount, r.frequency);
+      const yearly = monthly * 12;
+      const isActive = isActiveRecurring(r, now);
+      const nextDue = getNextDueDate(r);
+      const daysUntil = Math.ceil((nextDue - now) / (1000 * 60 * 60 * 24));
+
+      recData.push([
+        r.name,
+        REC_CATS[r.category]?.label || r.category,
+        r.amount,
+        r.frequency,
+        monthly,
+        yearly,
+        isActive ? `Active (due in ${daysUntil}d)` : 'Inactive'
+      ]);
+    });
+
+    // Add totals
+    const totalMonthlyRecurring = getMonthlyRecurringTotal();
+    recData.push(['']);
+    recData.push(['TOTAL MONTHLY COMMITTED', '', '', '', totalMonthlyRecurring, totalMonthlyRecurring * 12, '']);
+
+    const ws5 = XLSX.utils.aoa_to_sheet(recData);
+    XLSX.utils.book_append_sheet(wb, ws5, "Recurring Expenses");
+  }
+
+  // Generate filename with timestamp
+  const timestamp = new Date().toISOString().split('T')[0];
+  const filename = `VAULT_Report_${state.user?.name?.replace(/\s+/g, '_') || 'User'}_${timestamp}.xlsx`;
+
+  // Download
+  XLSX.writeFile(wb, filename);
+
+  toast('Export Complete', `Downloaded: ${filename}`, 'success');
+}
+
 window.addEventListener('load',()=>{
   if (loadData()) { bootApp(); runAI(); }
 });

@@ -169,27 +169,27 @@ body::before {
 .budget-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
 
 /* GRID */
-.grid-main { display: grid; grid-template-columns: 1fr 340px; gap: 1.25rem; margin-bottom: 1.5rem; align-items: stretch; height: calc(100vh - 280px); min-height: 500px; }
+.grid-main { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; margin-bottom: 2rem; }
 
 /* PANEL */
-.panel { background: var(--obsidian-2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; animation: panel-in 0.5s cubic-bezier(0.16,1,0.3,1) both; display: flex; flex-direction: column; }
+.panel { background: var(--obsidian-2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; animation: panel-in 0.5s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes panel-in { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-.panel-header { padding: 0.875rem 1.25rem; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.panel-header { padding: 1.4rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .panel-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mist); display: flex; align-items: center; gap: 0.6rem; }
 .panel-title i { color: var(--ember); font-size: 0.7rem; }
 .panel-action { font-family: var(--font-display); font-size: 0.68rem; color: var(--ash); background: none; border: 1px solid var(--border); padding: 0.3rem 0.65rem; cursor: pointer; transition: all 0.2s; letter-spacing: 0.08em; text-transform: uppercase; }
 .panel-action:hover { border-color: var(--ember-border); color: var(--ember); background: var(--ember-dim); }
-.panel-body { padding: 1rem 1.25rem; flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.panel-body { padding: 1.5rem; }
 
 /* CHARTS */
-.chart-area { height: 100%; min-height: 180px; position: relative; }
+.chart-area { height: 260px; position: relative; }
 .chart-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: var(--ash); }
 .chart-empty i { font-size: 2.5rem; opacity: 0.2; }
 .chart-empty-text { font-size: 0.82rem; opacity: 0.5; letter-spacing: 0.05em; }
 
 /* CAT BREAKDOWN */
 .cat-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.cat-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: var(--obsidian-3); border-radius: var(--radius-sm); border: 1px solid var(--border); transition: all 0.2s; }
+.cat-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--obsidian-3); border-radius: var(--radius-sm); border: 1px solid var(--border); transition: all 0.2s; }
 .cat-item:hover { border-color: var(--border-hover); background: var(--obsidian-4); }
 .cat-item-left { display: flex; align-items: center; gap: 0.75rem; }
 .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -198,15 +198,15 @@ body::before {
 .cat-amount { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; color: var(--white); }
 
 /* QUICK ADD */
-.type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.75rem; }
-.type-btn { padding: 0.5rem 0.4rem; background: var(--obsidian-3); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; color: var(--ash); font-family: var(--font-display); }
+.type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.25rem; }
+.type-btn { padding: 0.65rem 0.5rem; background: var(--obsidian-3); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; color: var(--ash); font-family: var(--font-display); }
 .type-btn.active-expense { background: var(--loss-dim); border-color: rgba(248,113,113,0.3); color: var(--loss); }
 .type-btn.active-income { background: var(--gain-dim); border-color: rgba(52,211,153,0.3); color: var(--gain); }
 .type-btn.active-save { background: var(--save-dim); border-color: rgba(96,165,250,0.3); color: var(--save); }
 .type-btn:hover:not(.active-expense):not(.active-income):not(.active-save) { background: var(--obsidian-4); color: var(--mist); }
-.input-group { margin-bottom: 0.625rem; }
-.input-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--ash); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.35rem; display: block; }
-.input-field { width: 100%; background: var(--obsidian-3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.625rem 0.875rem; color: var(--white); font-family: var(--font-mono); font-size: 0.9rem; transition: all 0.2s; outline: none; }
+.input-group { margin-bottom: 1rem; }
+.input-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--ash); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+.input-field { width: 100%; background: var(--obsidian-3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--white); font-family: var(--font-mono); font-size: 0.9rem; transition: all 0.2s; outline: none; }
 .input-field:focus { border-color: var(--ember-border); background: var(--obsidian-4); }
 .input-field::placeholder { color: var(--ash); opacity: 0.4; }
 .input-prefix-wrap { position: relative; }
@@ -214,24 +214,24 @@ body::before {
 .input-prefix-wrap .input-field { padding-left: 2.2rem; }
 select.input-field { appearance: none; cursor: pointer; }
 input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: invert(0.5) sepia(1) saturate(0.5); cursor: pointer; }
-.btn-add { width: 100%; padding: 0.625rem; border: none; border-radius: var(--radius-sm); background: var(--ember); color: var(--obsidian); font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.75rem; }
+.btn-add { width: 100%; padding: 0.9rem; border: none; border-radius: var(--radius-sm); background: var(--ember); color: var(--obsidian); font-family: var(--font-display); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.75rem; }
 .btn-add:hover { background: var(--ember-light); box-shadow: 0 6px 24px rgba(200,146,42,0.25); }
 
 /* TX LIST */
 .tx-list { display: flex; flex-direction: column; gap: 0.5rem; }
-.tx-item { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0.625rem; background: var(--obsidian-3); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: all 0.2s; position: relative; overflow: hidden; animation: tx-slide 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.tx-item { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1rem; background: var(--obsidian-3); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: all 0.2s; position: relative; overflow: hidden; animation: tx-slide 0.4s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes tx-slide { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
 .tx-item:hover { background: var(--obsidian-4); border-color: var(--border-hover); }
 .tx-item.recurring-tag { border-left: 2px solid var(--purple); }
-.tx-icon { width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border-radius: var(--radius-sm); }
+.tx-icon { width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border-radius: var(--radius-sm); }
 .tx-icon.income { background: var(--gain-dim); color: var(--gain); }
 .tx-icon.expense { background: var(--loss-dim); color: var(--loss); }
 .tx-icon.save { background: var(--save-dim); color: var(--save); }
 .tx-icon.recurring { background: var(--purple-dim); color: var(--purple); }
 .tx-details { flex: 1; min-width: 0; }
-.tx-merchant { font-size: 0.82rem; font-weight: 600; color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
-.tx-meta { font-family: var(--font-mono); font-size: 0.65rem; color: var(--ash); margin-top: 0.1rem; }
-.tx-amount { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+.tx-merchant { font-size: 0.82rem; font-weight: 600; color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-meta { font-family: var(--font-mono); font-size: 0.65rem; color: var(--ash); margin-top: 0.15rem; }
+.tx-amount { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; flex-shrink: 0; }
 .tx-amount.income { color: var(--gain); }
 .tx-amount.expense { color: var(--loss); }
 .tx-amount.save { color: var(--save); }
@@ -243,7 +243,7 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
 
 /* INSIGHTS */
 .insight-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.insight-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.625rem 0.875rem; border-radius: var(--radius-sm); border-left: 2px solid; animation: panel-in 0.4s both; }
+.insight-item { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-radius: var(--radius-sm); border-left: 2px solid; animation: panel-in 0.4s both; }
 .insight-item.warn { background: rgba(248,113,113,0.06); border-color: var(--loss); }
 .insight-item.caution { background: rgba(251,191,36,0.06); border-color: #fbbf24; }
 .insight-item.good { background: rgba(52,211,153,0.06); border-color: var(--gain); }
@@ -258,8 +258,8 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
 .insight-item.blue .insight-icon { color: var(--save); }
 .insight-item.purple .insight-icon { color: var(--purple); }
 .insight-body { flex: 1; }
-.insight-title { font-size: 0.82rem; font-weight: 700; color: var(--white); margin-bottom: 0.15rem; line-height: 1.3; }
-.insight-text { font-size: 0.75rem; color: var(--ash); line-height: 1.4; }
+.insight-title { font-size: 0.8rem; font-weight: 700; color: var(--white); margin-bottom: 0.25rem; }
+.insight-text { font-size: 0.78rem; color: var(--ash); line-height: 1.5; }
 .insight-cta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--gain); margin-top: 0.4rem; }
 
 /* GOAL */
@@ -614,7 +614,7 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
       <div id="daily-rate-banner" style="display:none;padding:1rem 1.5rem;background:var(--obsidian-2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.5rem;display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
           <div>
-            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--ash);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.3rem"><span id="daily-rate-month">Current Month</span> — Adjusted Daily Rate</div>
+            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--ash);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.3rem">Adjusted Daily Spending Rate</div>
             <div style="display:flex;align-items:baseline;gap:0.5rem">
               <span style="font-family:var(--font-mono);font-size:2rem;font-weight:700;color:var(--ember)" id="true-daily-rate">$0.00</span>
               <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--ash)">/day (bills amortized)</span>
@@ -649,18 +649,29 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
       </div>
 
       <div class="grid-main">
-        <div style="display:flex;flex-direction:column;gap:1rem;height:100%;overflow:hidden;">
-          <div class="panel" style="flex: 1; min-height: 0;"><div class="panel-header" style="padding: 0.875rem 1.25rem;"><div class="panel-title" style="font-size: 0.75rem;"><i class="fas fa-chart-pie"></i> Spending Breakdown</div><button class="panel-action" onclick="openAIModal()"><i class="fas fa-brain"></i> AI Report</button></div><div class="panel-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:center; padding: 1rem;">
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-chart-pie"></i> Spending Breakdown</div>
+              <button class="panel-action" onclick="openAIModal()"><i class="fas fa-brain"></i> AI Report</button>
+            </div>
+            <div class="panel-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:center">
               <div class="chart-area">
                 <div id="chart-wrap" class="chart-empty"><i class="fas fa-chart-pie"></i><span class="chart-empty-text">No data yet</span></div>
               </div>
-              <div id="cat-breakdown" class="cat-list" style="overflow-y: auto; max-height: 100%;">
+              <div id="cat-breakdown" class="cat-list">
                 <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--ash);text-align:center;padding:2rem 0;opacity:0.5">Add expenses to see categories</div>
               </div>
             </div>
           </div>
 
-          <div class="panel" style="flex: 1; min-height: 0; margin-top: 0;"><div class="panel-header" style="padding: 0.875rem 1.25rem;"><div class="panel-title" style="font-size: 0.75rem;"><i class="fas fa-robot"></i> AI Insights</div><span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--ash);letter-spacing:0.1em" id="tx-count-label">AWAITING DATA</span></div><div class="panel-body" style="padding: 0.75rem 1rem;"><div id="insights-container" class="insight-list" style="overflow-y: auto; max-height: 100%;">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-robot"></i> AI Insights</div>
+              <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--ash);letter-spacing:0.1em" id="tx-count-label">AWAITING DATA</span>
+            </div>
+            <div class="panel-body">
+              <div id="insights-container" class="insight-list">
                 <div class="insight-item info"><i class="insight-icon fas fa-info-circle"></i><div class="insight-body"><div class="insight-title">Pattern Detection Inactive</div><div class="insight-text">Add at least 3 transactions to activate AI spending analysis.</div></div></div>
               </div>
             </div>
@@ -668,10 +679,15 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
         </div>
 
         <div style="display:flex;flex-direction:column;gap:1.5rem">
-          <div class="panel" style="flex-shrink: 0;"><div class="panel-header" style="padding: 0.875rem 1.25rem;"><div class="panel-title" style="font-size: 0.75rem;"><i class="fas fa-plus"></i> Record Transaction</div></div><div class="panel-body" style="padding: 0.875rem 1.25rem; flex: none;"><div class="type-selector">
-                <button type="button" class="type-btn active-expense" id="btn-expense" onclick="setType('expense')">Expense</button>
-                <button type="button" class="type-btn" id="btn-income" onclick="setType('income')">Income</button>
-                <button type="button" class="type-btn" id="btn-save" onclick="setType('save')">Save</button>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-plus"></i> Record Transaction</div>
+            </div>
+            <div class="panel-body">
+              <div class="type-selector">
+                <button class="type-btn active-expense" id="btn-expense" onclick="setType('expense')">Expense</button>
+                <button class="type-btn" id="btn-income" onclick="setType('income')">Income</button>
+                <button class="type-btn" id="btn-save" onclick="setType('save')">Save</button>
               </div>
               <div class="input-group">
                 <label class="input-label">Amount</label>
@@ -692,11 +708,17 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
                   <option value="others">📦 Others</option>
                 </select>
               </div>
-              <button type="button" class="btn-add" onclick="addTx()"><i class="fas fa-check"></i><span id="btn-add-label">Record Expense</span></button>
+              <button class="btn-add" onclick="addTx()"><i class="fas fa-check"></i><span id="btn-add-label">Record Expense</span></button>
             </div>
           </div>
 
-          <div class="panel" style="flex: 1; min-height: 0; margin-top: 0;"><div class="panel-header" style="padding: 0.875rem 1.25rem;"><div class="panel-title" style="font-size: 0.75rem;"><i class="fas fa-clock"></i> Recent Activity</div><span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--ash)" id="tx-total-count">0 records</span></div><div class="panel-body" style="padding: 0.5rem;"><div id="tx-list" class="tx-list" style="overflow-y: auto; max-height: 100%;"><div class="tx-empty">— NO TRANSACTIONS YET —</div></div>
+          <div class="panel" style="flex:1">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-clock"></i> Recent Activity</div>
+              <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--ash)" id="tx-total-count">0 records</span>
+            </div>
+            <div class="panel-body">
+              <div id="tx-list" class="tx-list"><div class="tx-empty">— NO TRANSACTIONS YET —</div></div>
             </div>
           </div>
         </div>
@@ -759,7 +781,7 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator { filter: inve
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:0.75rem;height:100%;overflow-y:auto;padding-right:0.25rem;">
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
           <div class="panel">
             <div class="panel-header"><div class="panel-title"><i class="fas fa-calendar-alt"></i> Upcoming (30 days)</div></div>
             <div class="panel-body">
@@ -1098,53 +1120,23 @@ function daysInMonth(year, month) {
   return new Date(year, month+1, 0).getDate();
 }
 
-// Get budget for current month (resets monthly)
-function getCurrentMonthBudget() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-
-  // If we have a specific budget for this month, use it
-  // Otherwise fall back to the default monthly budget
-  return state.monthlyBudgets?.[monthKey] || state.monthlyBudget || 0;
-}
-
-// Set budget for specific month
-function setMonthBudget(year, month, amount) {
-  if (!state.monthlyBudgets) state.monthlyBudgets = {};
-  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-  state.monthlyBudgets[monthKey] = amount;
-  saveData();
-}
-
 // ════════════════════════════════════════════
 //  SMART DAILY RATE — amortizes bills & recurring
 // ════════════════════════════════════════════
 function computeTrueDailyRate() {
+  const txs = filtered(state.transactions);
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
   const dim = daysInMonth(year, month);
   const dayOfMonth = now.getDate();
 
-  // Get current month name for display
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                      'July', 'August', 'September', 'October', 'November', 'December'];
-  const currentMonthName = monthNames[month] + ' ' + year;
-
-  // Filter transactions to CURRENT MONTH ONLY
-  const currentMonthTxs = state.transactions.filter(t => {
-    const txDate = new Date(t.date);
-    return txDate.getFullYear() === year && txDate.getMonth() === month;
-  });
-
-  // Raw daily expenses (non-bill categories only from CURRENT MONTH transactions)
-  const dailyExpenses = currentMonthTxs.filter(t => t.type === 'expense' && (!t.category || CATS[t.category]?.daily));
+  // Raw daily expenses (non-bill categories only from transactions)
+  const dailyExpenses = txs.filter(t => t.type === 'expense' && (!t.category || CATS[t.category]?.daily));
   const dailyTotal = dailyExpenses.reduce((s, t) => s + t.amount, 0);
 
-  // Bill-type transaction expenses from CURRENT MONTH (amortize across days in month)
-  const billExpenses = currentMonthTxs.filter(t => t.type === 'expense' && t.category === 'bills');
+  // Bill-type transaction expenses (amortize across days in month)
+  const billExpenses = txs.filter(t => t.type === 'expense' && t.category === 'bills');
   const billTotal = billExpenses.reduce((s, t) => s + t.amount, 0);
   const billDailyAmortized = billTotal / dim;
 
@@ -1155,24 +1147,9 @@ function computeTrueDailyRate() {
   const trueDailyRate = (dayOfMonth > 0) ? (dailyTotal / dayOfMonth) + billDailyAmortized : 0;
   const trueDailyWithRecurring = trueDailyRate + recurringDailyAmortized;
   const daysLeft = dim - dayOfMonth;
+  const budgetPerDay = state.monthlyBudget > 0 ? (state.monthlyBudget - billTotal - recurringMonthly) / dim : 0;
 
-  // Get current month's budget
-  const currentMonthBudget = getCurrentMonthBudget();
-  const budgetPerDay = currentMonthBudget > 0 ? (currentMonthBudget - billTotal - recurringMonthly) / dim : 0;
-
-  return { 
-    trueDailyRate, 
-    trueDailyWithRecurring, 
-    daysLeft, 
-    budgetPerDay, 
-    billDailyAmortized, 
-    recurringDailyAmortized, 
-    dim,
-    currentMonthName,
-    billTotal,
-    recurringMonthly,
-    currentMonthBudget
-  };
+  return { trueDailyRate, trueDailyWithRecurring, daysLeft, budgetPerDay, billDailyAmortized, recurringDailyAmortized, dim };
 }
 
 // ════════════════════════════════════════════
@@ -1293,9 +1270,7 @@ function saveData() {
     recurringExpenses:state.recurringExpenses,
     availableBalance:state.availableBalance, savingsBalance:state.savingsBalance,
     totalIncome:state.totalIncome, budgetSpent:state.budgetSpent,
-    monthlyBudget:state.monthlyBudget, 
-    monthlyBudgets:state.monthlyBudgets, // Per-month budgets
-    goal:state.goal,
+    monthlyBudget:state.monthlyBudget, goal:state.goal,
     catBudgets:state.catBudgets,
     lang:state.lang, currency:state.currency, streak:state.streak
   };
@@ -1311,9 +1286,7 @@ function loadData() {
     recurringExpenses:d.recurringExpenses||[],
     availableBalance:d.availableBalance||0, savingsBalance:d.savingsBalance||0,
     totalIncome:d.totalIncome||0, budgetSpent:d.budgetSpent||0,
-    monthlyBudget:d.monthlyBudget||0,
-    monthlyBudgets:d.monthlyBudgets||{}, // Per-month budgets
-    goal:d.goal||state.goal,
+    monthlyBudget:d.monthlyBudget||0, goal:d.goal||state.goal,
     catBudgets:d.catBudgets||{},
     lang:d.lang||'en', currency:d.currency||'USD', streak:d.streak||0
   });
@@ -1523,18 +1496,8 @@ function updateRecChart(actives) {
 // ════════════════════════════════════════════
 function updateDailyBanner() {
   const banner = document.getElementById('daily-rate-banner');
-  const { 
-    trueDailyRate, 
-    trueDailyWithRecurring, 
-    daysLeft, 
-    budgetPerDay,
-    currentMonthName,
-    billTotal,
-    recurringMonthly,
-    currentMonthBudget,
-    dim
-  } = computeTrueDailyRate();
-
+  const { trueDailyRate, trueDailyWithRecurring, daysLeft, budgetPerDay } = computeTrueDailyRate();
+  const recurringMonthly = getMonthlyRecurringTotal();
   const committed = document.getElementById('m-committed');
   if (committed) {
     committed.textContent = fmt(recurringMonthly);
@@ -1542,19 +1505,14 @@ function updateDailyBanner() {
   }
 
   banner.style.display = 'block';
-
-  // Update month name
-  const monthEl = document.getElementById('daily-rate-month');
-  if (monthEl) monthEl.textContent = currentMonthName;
-
   document.getElementById('true-daily-rate').textContent = fmt(trueDailyRate);
   document.getElementById('daily-with-recurring').textContent = fmt(trueDailyWithRecurring);
   document.getElementById('days-left-month').textContent = daysLeft + 'd';
   document.getElementById('budget-per-day').textContent = budgetPerDay>0 ? fmt(budgetPerDay) : '—';
 
-  // Update subtitle with current month data only
-  document.getElementById('daily-rate-sub').textContent = 
-    `${currentMonthName}: Bills ${fmt(billTotal)} amortized at ${fmt(billTotal/dim)}/day · Recurring ${fmt(recurringMonthly/dim)}/day · Budget ${fmt(currentMonthBudget)}`;
+  const bills = state.transactions.filter(t=>t.type==='expense'&&t.category==='bills').reduce((s,t)=>s+t.amount,0);
+  const dim = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
+  document.getElementById('daily-rate-sub').textContent = `Bills ${fmt(bills)} amortized at ${fmt(bills/dim)}/day · Recurring ${fmt(recurringMonthly/dim)}/day`;
 }
 
 // ════════════════════════════════════════════
@@ -1564,59 +1522,27 @@ function openBudgetModal() { openModal('modal-budget'); }
 function setBudget() {
   const v = parseFloat(document.getElementById('inp-budget').value);
   if (!v||v<=0) { toast('Error','Enter valid amount','error'); return; }
-
-  // Set budget for CURRENT MONTH specifically
-  const now = new Date();
-  setMonthBudget(now.getFullYear(), now.getMonth(), v);
-
-  // Also set as default for future months
-  state.monthlyBudget = v;
-  state.alertShown = { eighty:false, breached:false };
-
+  state.monthlyBudget=v; state.alertShown={ eighty:false, breached:false };
   saveData(); updateAll(); closeModal('modal-budget');
-
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                      'July', 'August', 'September', 'October', 'November', 'December'];
-  toast('Budget Set', `${fmt(v)} for ${monthNames[now.getMonth()]}`, 'info');
+  toast('Budget Set',fmt(v)+' monthly limit','info');
 }
 function checkBudgetAlert() {
-  const currentMonthBudget = getCurrentMonthBudget();
-  if (!currentMonthBudget) return;
-
-  // Calculate spent for CURRENT MONTH ONLY
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const currentMonthSpent = state.transactions
-    .filter(t => {
-      const txDate = new Date(t.date);
-      return t.type === 'expense' && 
-             txDate.getFullYear() === year && 
-             txDate.getMonth() === month;
-    })
-    .reduce((s, t) => s + t.amount, 0);
-
-  const pct = (currentMonthSpent/currentMonthBudget)*100;
+  if (!state.monthlyBudget) return;
+  const pct = (state.budgetSpent/state.monthlyBudget)*100;
   const banner = document.getElementById('alert-banner');
-
-  // Get month name for alerts
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                      'July', 'August', 'September', 'October', 'November', 'December'];
-  const monthName = monthNames[month];
-
   if (pct>=100) {
     banner.className='alert-banner visible warn';
-    document.getElementById('alert-title').textContent=`🚨 ${monthName} Budget Breached`;
-    document.getElementById('alert-text').textContent=`Overspent by ${fmt(currentMonthSpent-currentMonthBudget)}`;
+    document.getElementById('alert-title').textContent='🚨 Budget Breached';
+    document.getElementById('alert-text').textContent=`Overspent by ${fmt(state.budgetSpent-state.monthlyBudget)}`;
     document.getElementById('alert-action').textContent='↓ Reduce spending immediately';
-    if (!state.alertShown.breached) { state.alertShown.breached=true; toast(`${monthName} BUDGET BREACHED`,'Overspent!','error'); }
+    if (!state.alertShown.breached) { state.alertShown.breached=true; toast('BUDGET BREACHED','Overspent!','error'); }
   } else if (pct>=80 && !state.alertShown.eighty) {
     state.alertShown.eighty=true;
     banner.className='alert-banner visible caution';
-    document.getElementById('alert-title').textContent=`⚠️ ${monthName} Budget at 80%`;
-    document.getElementById('alert-text').textContent=`${fmt(currentMonthSpent)} of ${fmt(currentMonthBudget)} used`;
+    document.getElementById('alert-title').textContent='⚠️ Budget at 80%';
+    document.getElementById('alert-text').textContent=`${fmt(state.budgetSpent)} of ${fmt(state.monthlyBudget)} used`;
     document.getElementById('alert-action').textContent='→ Consider pausing non-essential spending';
-    toast(`${monthName} Budget Warning`,'80% of budget used','warning');
+    toast('Budget Warning','80% of budget used','warning');
   }
 }
 function dismissAlert() { document.getElementById('alert-banner').className='alert-banner'; }
@@ -1846,42 +1772,25 @@ function openAIModal() {
 //  UPDATE ALL
 // ════════════════════════════════════════════
 function updateAll() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                      'July', 'August', 'September', 'October', 'November', 'December'];
-
-  // Get CURRENT MONTH transactions only for budget calculations
-  const currentMonthTxs = state.transactions.filter(t => {
-    const txDate = new Date(t.date);
-    return txDate.getFullYear() === year && txDate.getMonth() === month;
-  });
-
-  const currentMonthExpenses = currentMonthTxs.filter(t=>t.type==='expense');
-  const currentMonthSpent = currentMonthExpenses.reduce((s,t)=>s+t.amount,0);
-  const recurringMonthly = getMonthlyRecurringTotal();
-  const currentMonthBudget = getCurrentMonthBudget();
+  const txs=filtered(state.transactions);
+  const expenses=txs.filter(t=>t.type==='expense');
+  const totalSpent=expenses.reduce((s,t)=>s+t.amount,0);
+  const recurringMonthly=getMonthlyRecurringTotal();
 
   document.getElementById('m-available').textContent=fmt(state.availableBalance);
   document.getElementById('m-savings').textContent=fmt(state.savingsBalance);
-  document.getElementById('m-spent').textContent=fmt(currentMonthSpent);
-  document.getElementById('m-spent-sub').textContent=currentMonthExpenses.length>0?`${currentMonthExpenses.length} in ${monthNames[month]}`:`No expenses in ${monthNames[month]}`;
+  document.getElementById('m-spent').textContent=fmt(totalSpent);
+  document.getElementById('m-spent-sub').textContent=expenses.length>0?`${expenses.length} expenses`:'No expenses';
   document.getElementById('m-committed').textContent=fmt(recurringMonthly);
   document.getElementById('m-committed-sub').textContent=`${state.recurringExpenses.length} recurring`;
 
-  if (currentMonthBudget>0) {
-    const pct=Math.min((currentMonthSpent/currentMonthBudget)*100,100);
-    document.getElementById('m-budget').textContent=fmt(currentMonthBudget);
+  if (state.monthlyBudget>0) {
+    const pct=Math.min((state.budgetSpent/state.monthlyBudget)*100,100);
+    document.getElementById('m-budget').textContent=fmt(state.monthlyBudget);
     document.getElementById('m-budget').style.color=pct>=100?'var(--loss)':pct>=80?'#fbbf24':'var(--gain)';
     const fill=document.getElementById('budget-fill');
     fill.style.width=pct+'%'; fill.style.background=pct>=100?'var(--loss)':pct>=80?'#fbbf24':'var(--gain)';
-    document.getElementById('m-budget-sub').textContent=`${fmt(currentMonthSpent)} of ${fmt(currentMonthBudget)} in ${monthNames[month]}`;
-  } else {
-    document.getElementById('m-budget').textContent='— Set Budget';
-    document.getElementById('m-budget').style.color='var(--gain)';
-    document.getElementById('budget-fill').style.width='0%';
-    document.getElementById('m-budget-sub').textContent='Click to set';
+    document.getElementById('m-budget-sub').textContent=`${fmt(state.budgetSpent)} used`;
   }
 
   const breakdown={};

@@ -102,7 +102,7 @@ router.get('/', auth, async (req, res) => {
     const transactions = await Transaction.find({ userId: req.userId })
       .sort({ date: -1, createdAt: -1 });
     
-    res.json(transactions);
+    res.json({ transactions });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAULT — Personal Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --obsidian: #080b0f;
+  --obsidian-2: #0d1117;
+  --obsidian-3: #131920;
+  --ember: #c8922a;
+  --ember-light: #e8b45a;
+  --ash: #8a95a3;
+  --mist: #c4cdd8;
+  --white: #f0f4f8;
+  --gain: #34d399;
+  --loss: #f87171;
+  --save: #60a5fa;
+  --purple: #a78bfa;
+  --border: rgba(255,255,255,0.06);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--obsidian);
+  color: var(--white);
+  min-height: 100vh;
+}
+#auth-screen {
+  position: fixed; inset: 0; z-index: 900;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--obsidian); padding: 1.5rem;
+}
+.auth-container { width: 100%; max-width: 440px; }
+.auth-logo { display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem; }
+.auth-logo-mark { width: 48px; height: 48px; border: 1.5px solid var(--ember); display: flex; align-items: center; justify-content: center; }
+.auth-logo-mark i { color: var(--ember); font-size: 1.1rem; }
+.auth-logo-name { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; }
+.auth-logo-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--ash); letter-spacing: 0.2em; text-transform: uppercase; }
+.auth-card { background: var(--obsidian-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; }
+.auth-tabs { display: flex; margin-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.auth-tab { flex: 1; padding: 0.75rem; background: none; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; font-family: 'Syne', sans-serif; }
+.auth-tab.active { color: var(--ember); border-bottom-color: var(--ember); }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--ash); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.6rem; }
+.form-input { width: 100%; background: var(--obsidian-3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.9rem 1rem; color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; transition: all 0.2s; outline: none; }
+.form-input:focus { border-color: var(--ember); }
+.btn-primary { width: 100%; padding: 0.95rem; border: none; border-radius: var(--radius-sm); background: var(--ember); color: var(--obsidian); font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
+.btn-primary:hover { background: var(--ember-light); transform: translateY(-1px); }
+#app { display: none; min-height: 100vh; }
+#app.visible { display: block; }
+.topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 800; height: 64px; background: rgba(8,11,15,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+.topbar-brand { display: flex; align-items: center; gap: 0.75rem; }
+.topbar-mark { width: 32px; height: 32px; border: 1.5px solid var(--ember); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--ember); }
+.topbar-name { font-size: 1rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; }
+.topbar-right { display: flex; align-items: center; gap: 1rem; }
+.nav-tabs { display: flex; gap: 0.25rem; }
+.nav-tab { padding: 0.4rem 0.9rem; background: none; border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--ash); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-family: 'Syne', sans-serif; }
+.nav-tab:hover { color: var(--mist); border-color: var(--border); }
+.nav-tab.active { color: var(--ember); border-color: var(--ember); background: rgba(200,146,42,0.15); }
+.layout { padding-top: 64px; max-width: 1280px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+.page-section { display: none; }
+.page-section.active { display: block; }
+.page-header { padding: 2.5rem 0 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+.page-header-greeting { font-size: 2.2rem; color: var(--ash); margin-bottom: 0.3rem; }
+.page-header-name { color: var(--white); font-weight: 400; }
+.page-header-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--ash); letter-spacing: 0.1em; text-transform: uppercase; }
+.metrics-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 2rem; }
+.metric { background: var(--obsidian-2); padding: 1.5rem 1.25rem; cursor: pointer; transition: background 0.2s; }
+.metric:hover { background: var(--obsidian-3); }
+.metric-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--ash); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.metric-value { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; margin-bottom: 0.5rem; }
+.metric-value.positive { color: var(--gain); }
+.metric-value.ember { color: var(--ember); }
+.metric-value.save { color: var(--save); }
+.metric-value.purple { color: var(--purple); }
+.grid-main { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; margin-bottom: 2rem; }
+.panel { background: var(--obsidian-2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.panel-header { padding: 1.4rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mist); display: flex; align-items: center; gap: 0.6rem; }
+.panel-body { padding: 1.5rem; }
+.loading { display: flex; align-items: center; justify-content: center; padding: 3rem; color: var(--ash); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+.error { padding: 1.5rem; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); border-radius: var(--radius-sm); color: var(--loss); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-container">
+    <div class="auth-logo">
+      <div class="auth-logo-mark"><i class="fas fa-vault"></i></div>
+      <div>
+        <div class="auth-logo-name">VAULT</div>
+        <div class="auth-logo-sub">Personal Finance Intelligence</div>
+      </div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+        <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+      <form id="auth-form" onsubmit="handleAuth(event)">
+        <div class="form-group" id="name-group" style="display:none">
+          <label class="form-label">Full Name</label>
+          <input class="form-input" type="text" id="inp-name" placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" id="inp-email" placeholder="jane@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="inp-pwd" placeholder="••••••••" required>
+        </div>
+        <button class="btn-primary" type="submit" id="auth-submit">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <nav class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-mark"><i class="fas fa-vault"></i></div>
+      <span class="topbar-name">VAULT</span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="nav-tab" onclick="showPage('transactions')">Transactions</button>
+      <button class="nav-tab" onclick="showPage('insights')">Insights</button>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-primary" onclick="logout()" style="width:auto;padding:0.5rem 1rem;font-size:0.7rem;">Logout</button>
+    </div>
+  </nav>
+  
+  <div class="layout">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page-section active">
+      <div class="page-header">
+        <div class="page-header-greeting">Welcome, <span class="page-header-name" id="display-name">User</span></div>
+        <div class="page-header-meta" id="today-date">—</div>
+      </div>
+      
+      <div class="metrics-row" id="metrics-row">
+        <div class="metric">
+          <div class="metric-label">Available</div>
+          <div class="metric-value save" id="m-available">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Savings</div>
+          <div class="metric-value ember" id="m-savings">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Budget</div>
+          <div class="metric-value positive" id="m-budget">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Spent</div>
+          <div class="metric-value" id="m-spent" style="color:var(--ash)">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Committed</div>
+          <div class="metric-value purple" id="m-committed">$0.00</div>
+        </div>
+      </div>
+      
+      <div class="grid-main">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-chart-pie"></i> Spending Overview</div>
+          </div>
+          <div class="panel-body" id="chart-container">
+            <div class="loading">Loading data...</div>
+          </div>
+        </div>
+        
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-list"></i> Recent Activity</div>
+          </div>
+          <div class="panel-body" id="recent-container">
+            <div class="loading">Loading transactions...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Transactions -->
+    <div id="page-transactions" class="page-section">
+      <div class="page-header">
+        <div class="page-header-greeting">All <span class="page-header-name">Transactions</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-body" id="all-transactions">
+          <div class="loading">Loading...</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Insights -->
+    <div id="page-insights" class="page-section">
+      <div class="page-header">
+        <div class="page-header-greeting">AI <span class="page-header-name">Insights</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-body" id="insights-container">
+          <div class="loading">Analyzing your data...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG - YOUR RENDER BACKEND URL
+// ════════════════════════════════════════════════════
+const API_URL = 'https://smartsave-backend-j3f0.onrender.com/api';
+
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+let token = localStorage.getItem('token') || null;
+let currentUser = null;
+
+// ════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════
+function switchTab(mode) {
+  document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+  document.getElementById('name-group').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-submit').textContent = mode === 'login' ? 'Login' : 'Create Account';
+}
+
+async function handleAuth(e) {
+  e.preventDefault();
+  const email = document.getElementById('inp-email').value;
+  const password = document.getElementById('inp-pwd').value;
+  const name = document.getElementById('inp-name').value;
+  const isLogin = document.getElementById('tab-login').classList.contains('active');
+  
+  const endpoint = isLogin ? '/auth/login' : '/auth/register';
+  const body = isLogin ? { email, password } : { name, email, password };
+  
+  try {
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    
+    const data = await res.json();
+    
+    if (data.token) {
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('token', token);
+      bootApp();
+    } else {
+      alert(data.error || 'Authentication failed');
+    }
+  } catch (err) {
+    alert('Network error. Please try again.');
+    console.error(err);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  token = null;
+  currentUser = null;
+  location.reload();
+}
+
+// ════════════════════════════════════════════════════
+//  APP BOOT
+// ════════════════════════════════════════════════════
+async function bootApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  
+  // Set user name
+  if (currentUser) {
+    document.getElementById('display-name').textContent = currentUser.name || 'User';
+  }
+  
+  // Set date
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+  });
+  
+  // Load dashboard data
+  await loadDashboard();
+}
+
+// ════════════════════════════════════════════════════
+//  API CALLS (All logic is on backend!)
+// ════════════════════════════════════════════════════
+async function apiCall(endpoint, method = 'GET', body = null) {
+  const options = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) options.body = JSON.stringify(body);
+  
+  const res = await fetch(`${API_URL}${endpoint}`, options);
+  if (res.status === 401) {
+    logout();
+    return null;
+  }
+  return res.json();
+}
+
+async function loadDashboard() {
+  try {
+    // Get all data from backend
+    const [metrics, transactions, insights] = await Promise.all([
+      apiCall('/dashboard/metrics'),
+      apiCall('/transactions'),
+      apiCall('/insights')
+    ]);
+    
+    if (metrics) updateMetrics(metrics);
+    if (transactions) updateTransactions(transactions);
+    if (insights) updateInsights(insights);
+    
+  } catch (err) {
+    console.error('Failed to load dashboard:', err);
+    showError('Failed to load data. Please refresh.');
+  }
+}
+
+function updateMetrics(data) {
+  document.getElementById('m-available').textContent = formatCurrency(data.available);
+  document.getElementById('m-savings').textContent = formatCurrency(data.savings);
+  document.getElementById('m-budget').textContent = formatCurrency(data.budget);
+  document.getElementById('m-spent').textContent = formatCurrency(data.spent);
+  document.getElementById('m-committed').textContent = formatCurrency(data.committed);
+}
+
+function updateTransactions(data) {
+  const container = document.getElementById('recent-container');
+  if (!data.transactions || data.transactions.length === 0) {
+    container.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--ash);font-family:JetBrains Mono;font-size:0.75rem;">No transactions yet</div>';
+    return;
+  }
+  
+  // Show last 5 transactions
+  const recent = data.transactions.slice(0, 5);
+  container.innerHTML = recent.map(t => `
+    <div style="display:flex;justify-content:space-between;padding:0.75rem;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:0.85rem;color:var(--white);">${t.merchant}</div>
+        <div style="font-family:JetBrains Mono;font-size:0.65rem;color:var(--ash);">${t.date}</div>
+      </div>
+      <div style="font-family:JetBrains Mono;font-size:0.9rem;color:${t.type === 'income' ? 'var(--gain)' : t.type === 'expense' ? 'var(--loss)' : 'var(--save)'};">
+        ${t.type === 'income' ? '+' : t.type === 'expense' ? '-' : '→'}${formatCurrency(t.amount)}
+      </div>
+    </div>
+  `).join('');
+  
+  // Update chart container with message
+  document.getElementById('chart-container').innerHTML = `
+    <div style="padding:2rem;text-align:center;">
+      <i class="fas fa-chart-pie" style="font-size:3rem;color:var(--ember);opacity:0.5;margin-bottom:1rem;"></i>
+      <div style="color:var(--ash);font-family:JetBrains Mono;font-size:0.75rem;">
+        ${data.transactions.length} transactions tracked<br>
+        View detailed breakdown in API response
+      </div>
+    </div>
+  `;
+}
+
+function updateInsights(data) {
+  const container = document.getElementById('insights-container');
+  if (!data.insights || data.insights.length === 0) {
+    container.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--ash);">Add more transactions for AI insights</div>';
+    return;
+  }
+  
+  container.innerHTML = data.insights.map(i => `
+    <div style="padding:1rem;margin-bottom:0.5rem;background:var(--obsidian-3);border-radius:8px;border-left:3px solid ${i.type === 'warning' ? 'var(--loss)' : i.type === 'good' ? 'var(--gain)' : 'var(--ember)'};">
+      <div style="font-size:0.85rem;font-weight:600;color:var(--white);margin-bottom:0.25rem;">${i.title}</div>
+      <div style="font-size:0.75rem;color:var(--ash);">${i.message}</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount || 0);
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if (page === 'transactions') loadAllTransactions();
+  if (page === 'insights') loadInsights();
+}
+
+async function loadAllTransactions() {
+  const container = document.getElementById('all-transactions');
+  container.innerHTML = '<div class="loading">Loading...</div>';
+  
+  const data = await apiCall('/transactions');
+  if (data && data.transactions) {
+    container.innerHTML = data.transactions.map(t => `
+      <div style="display:flex;justify-content:space-between;padding:1rem;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:0.9rem;color:var(--white);">${t.merchant}</div>
+          <div style="font-family:JetBrains Mono;font-size:0.7rem;color:var(--ash);">${t.date} · ${t.category || '-'}</div>
+        </div>
+        <div style="font-family:JetBrains Mono;font-size:1rem;color:${t.type === 'income' ? 'var(--gain)' : t.type === 'expense' ? 'var(--loss)' : 'var(--save)'};">
+          ${t.type === 'income' ? '+' : t.type === 'expense' ? '-' : '→'}${formatCurrency(t.amount)}
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+async function loadInsights() {
+  const container = document.getElementById('insights-container');
+  container.innerHTML = '<div class="loading">Analyzing...</div>';
+  
+  const data = await apiCall('/insights');
+  if (data) updateInsights(data);
+}
+
+function showError(msg) {
+  document.querySelectorAll('.panel-body').forEach(el => {
+    el.innerHTML = `<div class="error">${msg}</div>`;
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  if (token) {
+    // Verify token and boot
+    bootApp();
+  }
+});
+</script>
+</body>
+</html>

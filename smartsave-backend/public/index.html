@@ -1,1108 +1,589 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Vault</title>
+<script>
+/**
+ * VAULT (Original UI) + Backend Storage Layer
+ * - Keeps your original layout + features
+ * - Uses backend for auth + transactions + budgets + recurring + metrics
+ *
+ * Endpoints used (from your backend):
+ *  - POST   /api/auth/signup, /api/auth/login  :contentReference[oaicite:6]{index=6}
+ *  - GET    /api/dashboard/metrics            :contentReference[oaicite:7]{index=7}
+ *  - GET    /api/transactions                 :contentReference[oaicite:8]{index=8}
+ *  - POST   /api/transactions                 :contentReference[oaicite:9]{index=9}
+ *  - DELETE /api/transactions/:id             :contentReference[oaicite:10]{index=10}
+ *  - GET/POST /api/budget (+ /category)       :contentReference[oaicite:11]{index=11}
+ *  - GET/POST/DELETE /api/recurring           :contentReference[oaicite:12]{index=12}
+ */
 
-  <!-- Optional: If you want true Excel .xlsx export, keep this CDN.
-       If you don't want any CDN, remove it and CSV export will still work. -->
-  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+// ════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════
+const API_URL = 'https://smartsave-backend-j3f0.onrender.com/api';
 
-  <style>
-    /* Minimal clean styling scaffold.
-       If you already have your beautiful CSS, replace this with your old styles. */
+// ════════════════════════════════════════════
+//  AUTH STATE
+// ════════════════════════════════════════════
+let token = localStorage.getItem('token') || null;
 
-    :root {
-      --bg: #07090d;
-      --panel: rgba(255,255,255,.04);
-      --panel2: rgba(255,255,255,.06);
-      --border: rgba(255,255,255,.08);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.55);
-      --accent: #d8a62a;
-      --good: #2fdc8c;
-      --bad: #ff5b6a;
-    }
+// We store the user object locally because backend does not expose a "me" endpoint in the files you shared.
+// This lets refresh still show name/initial without re-login.
+let persistedUser = null;
+try { persistedUser = JSON.parse(localStorage.getItem('user') || 'null'); } catch { persistedUser = null; }
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 700px at 30% 0%, rgba(216,166,42,.12), transparent 55%),
-                  radial-gradient(900px 600px at 75% 30%, rgba(47,220,140,.08), transparent 50%),
-                  var(--bg);
-      color: var(--text);
-    }
+// ════════════════════════════════════════════
+//  ORIGINAL STATE (keep as your original)
+// ════════════════════════════════════════════
+const state = {
+  user: null,
+  transactions: [],
+  recurringExpenses: [],
+  availableBalance: 0,
+  savingsBalance: 0,
+  totalIncome: 0,
+  budgetSpent: 0,
+  monthlyBudget: 0,
+  budgetsByMonth: {}, // { "2025-01": { budget: 1000, spent: 250 }, ... }
+  goal: { amount:0, deadline:null, name:'', description:'', icon:'fa-plane', emoji:'✈️' },
+  catBudgets: {},
+  currentType: 'expense',
+  lang: 'en',
+  currency: 'USD',
+  streak: 0,
+  dateFilter: { start:null, end:null },
+  alertShown: { eighty:false, breached:false },
+  txToDelete: null
+};
 
-    a { color: inherit; text-decoration: none; }
-    button, input, select { font: inherit; }
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+const CURRENCIES = {
+  USD:{ sym:'$', locale:'en-US' },
+  EUR:{ sym:'€', locale:'de-DE' },
+  GBP:{ sym:'£', locale:'en-GB' },
+  BRL:{ sym:'R$', locale:'pt-BR' }
+};
 
-    /* Top bar */
-    .topbar {
-      position: sticky; top: 0; z-index: 20;
-      backdrop-filter: blur(10px);
-      background: rgba(7,9,13,.65);
-      border-bottom: 1px solid var(--border);
-    }
-    .topbar-inner {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; padding: 14px 20px;
-      max-width: 1200px; margin: 0 auto;
-    }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .12em; }
-    .brand-badge {
-      width: 34px; height: 34px; border-radius: 9px;
-      border: 1px solid var(--border);
-      display: grid; place-items: center;
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
-    }
-    .nav {
-      display: flex; align-items: center; gap: 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 6px;
-      background: rgba(255,255,255,.03);
-    }
-    .tab {
-      padding: 8px 14px;
-      border-radius: 999px;
-      color: var(--muted);
-      cursor: pointer;
-      user-select: none;
-      transition: .15s ease;
-    }
-    .tab.active {
-      color: var(--text);
-      border: 1px solid rgba(216,166,42,.35);
-      background: rgba(216,166,42,.10);
-    }
-    .actions { display: flex; gap: 10px; align-items: center; }
-    .pill {
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .btn {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: .15s ease;
-    }
-    .btn:hover { background: rgba(255,255,255,.07); }
-    .btn.primary {
-      border-color: rgba(216,166,42,.45);
-      background: rgba(216,166,42,.12);
-      color: #fff;
-    }
-    .btn.danger {
-      border-color: rgba(255,91,106,.45);
-      background: rgba(255,91,106,.10);
-    }
+const CATS = {
+  food:          { color:'#f87171', label:'Food & Dining',  icon:'fa-utensils',    daily:true },
+  shopping:      { color:'#60a5fa', label:'Shopping',       icon:'fa-shopping-bag',daily:true },
+  transport:     { color:'#34d399', label:'Transport',      icon:'fa-bus',         daily:true },
+  entertainment: { color:'#a78bfa', label:'Entertainment',  icon:'fa-film',        daily:true },
+  bills:         { color:'#fbbf24', label:'Bills',          icon:'fa-bolt',        daily:false }, // amortized
+  others:        { color:'#8a95a3', label:'Others',         icon:'fa-receipt',     daily:true }
+};
 
-    /* Cards / layout */
-    .hero { padding: 22px 0 14px; }
-    .title { font-size: 40px; letter-spacing: .02em; margin: 0 0 8px; }
-    .subtitle { color: var(--muted); letter-spacing: .18em; font-size: 12px; text-transform: uppercase; }
-    .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-    .grid2 { display: grid; grid-template-columns: 2fr 1.2fr; gap: 12px; }
-    .grid3 { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 12px; }
+const REC_CATS = {
+  housing:       { color:'#c8922a', label:'Housing',        icon:'🏠' },
+  insurance:     { color:'#60a5fa', label:'Insurance',      icon:'🛡️' },
+  loans:         { color:'#f87171', label:'Loans',          icon:'💳' },
+  subscriptions: { color:'#a78bfa', label:'Subscriptions',  icon:'📱' },
+  utilities:     { color:'#fbbf24', label:'Utilities',      icon:'💡' },
+  transport:     { color:'#34d399', label:'Transport',      icon:'🚗' },
+  health:        { color:'#f0a0a0', label:'Health',         icon:'🏥' },
+  others:        { color:'#8a95a3', label:'Others',         icon:'📦' }
+};
 
-    @media (max-width: 1100px) {
-      .grid5 { grid-template-columns: repeat(2, 1fr); }
-      .grid2 { grid-template-columns: 1fr; }
-      .grid3 { grid-template-columns: 1fr; }
-    }
+// If your original file had these globals, keep them:
+let chart = null;
+let currentPage = 'dashboard';
 
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-      padding: 16px;
-      min-height: 70px;
-    }
-    .card h3 {
-      margin: 0 0 12px;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: .14em;
-      color: rgba(255,255,255,.75);
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 10px;
-    }
-    .metric {
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: .02em;
-    }
-    .muted { color: var(--muted); }
-    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .field { display: grid; gap: 6px; margin: 10px 0; }
-    .field label { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.35);
-      color: var(--text);
-      outline: none;
-    }
-    input:focus, select:focus { border-color: rgba(216,166,42,.55); }
+// ════════════════════════════════════════════
+//  API HELPER
+// ════════════════════════════════════════════
+async function apiCall(endpoint, method='GET', body=null) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    .seg {
-      display: inline-flex;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      background: rgba(255,255,255,.03);
-    }
-    .seg button {
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      padding: 10px 12px;
-      cursor: pointer;
-    }
-    .seg button.active {
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-    }
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null
+  });
 
-    .list { display: grid; gap: 10px; }
-    .item {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.03);
-      border-radius: 14px;
-      padding: 12px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-    }
-    .item .left { display: grid; gap: 2px; }
-    .item .name { font-weight: 650; }
-    .item .meta { font-size: 12px; color: var(--muted); }
-    .amount.bad { color: var(--bad); font-weight: 700; }
-    .amount.good { color: var(--good); font-weight: 700; }
-    .amount.neutral { color: rgba(255,255,255,.85); font-weight: 700; }
+  // Handle auth expiry
+  if (res.status === 401) {
+    logout();
+    throw new Error('Unauthorized');
+  }
 
-    .hide { display: none !important; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error || `Request failed (${res.status})`;
+    throw new Error(msg);
+  }
+  return data;
+}
 
-    /* Auth overlay */
-    .auth {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 30px;
-    }
-    .auth-card {
-      width: min(520px, 100%);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
-      padding: 18px;
-    }
-    .auth-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .auth-head h2 { margin: 0; letter-spacing: .12em; text-transform: uppercase; font-size: 14px; color: rgba(255,255,255,.85); }
-    .note { font-size: 13px; color: var(--muted); line-height: 1.5; }
-    .err { color: var(--bad); font-size: 13px; }
-    .ok { color: var(--good); font-size: 13px; }
+// ════════════════════════════════════════════
+//  AUTH (UI tabs remain same layout)
+// ════════════════════════════════════════════
+let authMode = 'login';
+function switchTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-login').classList.toggle('active', mode==='login');
+  document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
+  document.getElementById('name-group').style.display = mode==='signup' ? 'block' : 'none';
+  document.getElementById('auth-submit').textContent = mode==='login' ? 'Login' : 'Create Account';
+}
 
-    canvas { width: 100%; height: 240px; border-radius: 14px; background: rgba(255,255,255,.02); border: 1px solid var(--border); }
-  </style>
-</head>
+async function handleAuth(e) {
+  e.preventDefault();
 
-<body>
-  <!-- AUTH VIEW -->
-  <div id="authView" class="auth">
-    <div class="auth-card">
-      <div class="auth-head">
-        <div class="brand">
-          <div class="brand-badge">◻︎</div>
-          <div>VAULT</div>
-        </div>
-        <div class="row">
-          <button class="btn" id="switchAuthBtn">Switch to Sign up</button>
-        </div>
-      </div>
+  const email = document.getElementById('inp-email').value.trim();
+  const password = document.getElementById('inp-pwd').value;
+  const name = (document.getElementById('inp-name').value || '').trim();
 
-      <p class="note" style="margin-top:10px">
-        Sign in to your Vault. Your data is stored securely on the server (not local storage).
-      </p>
+  try {
+    const endpoint = authMode === 'login' ? '/auth/login' : '/auth/signup';
+    const payload = authMode === 'login'
+      ? { email, password }
+      : { name, email, password };
 
-      <div id="authMsg" class="err hide"></div>
+    const data = await apiCall(endpoint, 'POST', payload);
 
-      <div class="field" id="nameField" class="hide">
-        <label>Name (Sign up only)</label>
-        <input id="authName" placeholder="Your name" autocomplete="name" />
-      </div>
+    // Backend returns { token, user } :contentReference[oaicite:13]{index=13}
+    token = data.token;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(data.user));
 
-      <div class="field">
-        <label>Email</label>
-        <input id="authEmail" placeholder="you@example.com" autocomplete="email" />
-      </div>
+    state.user = data.user;
 
-      <div class="field">
-        <label>Password</label>
-        <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
-      </div>
+    await bootApp(); // will hydrate from API
+  } catch (err) {
+    console.error(err);
+    toast('Auth Error', err.message || 'Network error. Please try again.', 'error');
+  }
+}
 
-      <div class="row" style="justify-content: space-between; margin-top: 12px;">
-        <button class="btn primary" id="authSubmitBtn">Login</button>
-        <span class="note">Tip: if it fails, open DevTools → Network.</span>
-      </div>
-    </div>
-  </div>
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  token = null;
+  state.user = null;
+  location.reload();
+}
 
-  <!-- APP VIEW -->
-  <div id="appView" class="hide">
-    <div class="topbar">
-      <div class="topbar-inner">
-        <div class="brand">
-          <div class="brand-badge">◻︎</div>
-          <div>VAULT</div>
-        </div>
+// ════════════════════════════════════════════
+//  BOOT (same UI, just loads from API)
+// ════════════════════════════════════════════
+async function bootApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
 
-        <div class="nav" role="tablist">
-          <div class="tab active" data-tab="dashboard">Dashboard</div>
-          <div class="tab" data-tab="recurring">Recurring</div>
-          <div class="tab" data-tab="planning">Planning</div>
-        </div>
+  // Restore name/initial from user
+  const u = state.user || persistedUser || { name: 'Saver' };
+  state.user = u;
 
-        <div class="actions">
-          <div class="pill" id="aiStatus">AI: idle</div>
-          <button class="btn" id="exportBtn">Export</button>
-          <button class="btn danger" id="logoutBtn">Logout</button>
-        </div>
-      </div>
-    </div>
+  document.getElementById('display-name').textContent = u.name || 'Saver';
+  document.getElementById('user-initial').textContent = (u.name || 'S')[0].toUpperCase();
 
-    <div class="wrap">
-      <div class="hero">
-        <h1 class="title" id="welcomeTitle">Welcome</h1>
-        <div class="subtitle" id="todayLine"></div>
-      </div>
+  const h = new Date().getHours();
+  document.getElementById('time-greeting').textContent = h<12?'morning':h<17?'afternoon':'evening';
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US',{
+    weekday:'long',month:'long',day:'numeric',year:'numeric'
+  });
 
-      <!-- DASHBOARD -->
-      <section id="tab-dashboard">
-        <div class="grid5">
-          <div class="card">
-            <h3>Available <span class="muted">Spendable</span></h3>
-            <div class="metric" id="mAvailable">$0.00</div>
-          </div>
-          <div class="card">
-            <h3>Savings <span class="muted">Reserved</span></h3>
-            <div class="metric" id="mSavings">$0.00</div>
-          </div>
-          <div class="card">
-            <h3>Budget <span class="muted">Monthly</span></h3>
-            <div class="metric" id="mBudget">$0.00</div>
-          </div>
-          <div class="card">
-            <h3>Spent <span class="muted">This month</span></h3>
-            <div class="metric" id="mSpent">$0.00</div>
-          </div>
-          <div class="card">
-            <h3>Committed <span class="muted">Recurring</span></h3>
-            <div class="metric" id="mCommitted">$0.00</div>
-          </div>
-        </div>
+  // Load local-only preferences (goal, currency, etc.)
+  loadLocalPrefsOnly();
 
-        <div style="height: 12px"></div>
+  // Hydrate “real” app data from backend
+  await hydrateFromBackend();
 
-        <div class="grid2">
-          <div class="card">
-            <h3>
-              Spending Breakdown
-              <span class="muted" id="breakdownHint">Loading…</span>
-            </h3>
-            <canvas id="donut"></canvas>
-          </div>
+  // Keep your original init calls
+  checkNewMonth?.();
+  initDates?.();
+  applyCurrencySymbols?.();
 
-          <div class="card">
-            <h3>Recent Activity <span class="muted" id="txHint"></span></h3>
-            <div id="recentList" class="list">
-              <div class="muted">Loading…</div>
-            </div>
-          </div>
-        </div>
+  updateAll?.();
+  updateRecurringPage?.();
+  updatePlanningPage?.();
+}
 
-        <div style="height: 12px"></div>
+// ════════════════════════════════════════════
+//  LOCAL PREFS (goal/settings/currency) - kept local
+//  because your backend routes do not persist these yet.
+// ════════════════════════════════════════════
+function loadLocalPrefsOnly() {
+  const raw = localStorage.getItem('vault_prefs');
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    state.goal = d.goal || state.goal;
+    state.catBudgets = d.catBudgets || {};
+    state.lang = d.lang || 'en';
+    state.currency = d.currency || 'USD';
+  } catch {}
+}
 
-        <div class="grid3">
-          <div class="card">
-            <h3>Record Transaction</h3>
+function saveLocalPrefsOnly() {
+  localStorage.setItem('vault_prefs', JSON.stringify({
+    goal: state.goal,
+    catBudgets: state.catBudgets,
+    lang: state.lang,
+    currency: state.currency
+  }));
+}
 
-            <div class="seg" style="margin-bottom:10px">
-              <button class="active" data-mode="expense" id="modeExpense">Expense</button>
-              <button data-mode="income" id="modeIncome">Income</button>
-              <button data-mode="save" id="modeSave">Save</button>
-            </div>
+// ════════════════════════════════════════════
+//  HYDRATE FROM BACKEND
+// ════════════════════════════════════════════
+async function hydrateFromBackend() {
+  // 1) Metrics (balances, streak)
+  const metrics = await apiCall('/dashboard/metrics', 'GET'); // :contentReference[oaicite:14]{index=14}
+  state.availableBalance = metrics.available || 0;
+  state.savingsBalance   = metrics.savings || 0;
+  state.totalIncome      = metrics.totalIncome || 0;
+  state.streak           = metrics.streak || 0;
+  state.monthlyBudget    = metrics.budget || 0;
+  state.budgetSpent      = metrics.spent || 0;
 
-            <div class="field">
-              <label>Category</label>
-              <input id="txCategory" placeholder="Food & Dining" />
-            </div>
+  // 2) Budget details (budgetsByMonth)
+  try {
+    const bud = await apiCall('/budget', 'GET'); // :contentReference[oaicite:15]{index=15}
+    state.monthlyBudget = bud.monthlyBudget || state.monthlyBudget;
+    state.budgetsByMonth = bud.budgetsByMonth || state.budgetsByMonth || {};
+  } catch (e) {
+    // not fatal
+    console.warn('Budget hydrate skipped:', e.message);
+  }
 
-            <div class="field">
-              <label>Amount</label>
-              <input id="txAmount" type="number" step="0.01" placeholder="0.00" />
-            </div>
+  // 3) Transactions
+  // Your transactions route sometimes returns {transactions: []} (fixed version) :contentReference[oaicite:16]{index=16}
+  // but some older route versions returned [] directly. We support both.
+  const txRes = await apiCall('/transactions', 'GET');
+  const txs = Array.isArray(txRes) ? txRes : (txRes.transactions || []);
+  state.transactions = txs.map(t => ({
+    id: t._id || t.id,                 // normalize
+    merchant: t.merchant || '—',
+    amount: Number(t.amount || 0),
+    category: t.category || null,
+    date: t.date,
+    type: t.type
+  })).sort((a,b) => (b.date||'').localeCompare(a.date||''));
 
-            <div class="field">
-              <label>Date</label>
-              <input id="txDate" type="date" />
-            </div>
+  // 4) Recurring
+  const recRes = await apiCall('/recurring', 'GET'); // :contentReference[oaicite:17]{index=17}
+  state.recurringExpenses = (Array.isArray(recRes) ? recRes : []).map(r => ({
+    id: r._id || r.id,
+    name: r.name,
+    category: r.category || 'others',
+    amount: Number(r.amount || 0),
+    frequency: r.frequency || 'monthly',
+    startDate: r.startDate,
+    endDate: r.endDate || null,
+    autoRecord: false // backend model doesn’t store this yet
+  }));
 
-            <div class="field">
-              <label>Note (optional)</label>
-              <input id="txNote" placeholder="e.g. dinner with friends" />
-            </div>
+  // Ensure streak UI appears
+  updateStreakUI?.();
 
-            <div class="row" style="justify-content: space-between; margin-top: 8px;">
-              <button class="btn primary" id="addTxBtn">Add</button>
-              <div id="txMsg" class="err hide"></div>
-            </div>
-          </div>
+  // If your original code depended on recalculation:
+  if (typeof recalculateMonthlySpent === 'function') {
+    recalculateMonthlySpent();
+  }
+}
 
-          <div class="card">
-            <h3>AI Insights <span class="muted">Server-generated</span></h3>
-            <div id="insightsBox" class="list">
-              <div class="muted">Loading…</div>
-            </div>
-          </div>
+// ════════════════════════════════════════════
+//  TRANSACTIONS (same UI, but backend write)
+// ════════════════════════════════════════════
+function setType(type) {
+  state.currentType = type;
+  document.getElementById('btn-expense').className = 'type-btn'+(type==='expense'?' active-expense':'');
+  document.getElementById('btn-income').className = 'type-btn'+(type==='income'?' active-income':'');
+  document.getElementById('btn-save').className = 'type-btn'+(type==='save'?' active-save':'');
+  document.getElementById('cat-group').style.display = type==='expense' ? 'block' : 'none';
+  const labels = { expense:'Record Expense', income:'Record Income', save:'Move to Savings' };
+  document.getElementById('btn-add-label').textContent = labels[type];
+}
 
-          <div class="card">
-            <h3>Period</h3>
-            <div class="field">
-              <label>From</label>
-              <input id="fromDate" type="date" />
-            </div>
-            <div class="field">
-              <label>To</label>
-              <input id="toDate" type="date" />
-            </div>
-            <div class="row" style="justify-content: space-between;">
-              <button class="btn primary" id="applyPeriodBtn">Apply</button>
-              <button class="btn" id="resetPeriodBtn">Reset</button>
-            </div>
-            <p class="note" style="margin-top: 10px;">
-              Period filters dashboard charts + recent activity.
-            </p>
-          </div>
-        </div>
-      </section>
+async function addTx() {
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  const cat = document.getElementById('tx-cat').value;
+  const dateVal = document.getElementById('tx-date').value;
 
-      <!-- RECURRING -->
-      <section id="tab-recurring" class="hide">
-        <div class="grid2">
-          <div class="card">
-            <h3>Add Recurring Expense</h3>
+  if (!amount || amount <= 0) { toast('Invalid Amount','Enter a positive number','error'); return; }
+  if (state.currentType==='save' && amount > state.availableBalance) {
+    toast('Insufficient Balance',`Only ${fmt(state.availableBalance)} available`,'error');
+    return;
+  }
 
-            <div class="field">
-              <label>Name</label>
-              <input id="rName" placeholder="Netflix" />
-            </div>
-            <div class="field">
-              <label>Amount</label>
-              <input id="rAmount" type="number" step="0.01" placeholder="0.00" />
-            </div>
-            <div class="field">
-              <label>Frequency</label>
-              <select id="rFrequency">
-                <option value="monthly">Monthly</option>
-                <option value="weekly">Weekly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Due Day (optional)</label>
-              <input id="rDueDay" type="number" min="1" max="31" placeholder="1" />
-            </div>
+  const merchant =
+    state.currentType==='income' ? 'Income' :
+    state.currentType==='save'   ? 'Saved to Goal' :
+    (CATS[cat]?.label || 'Expense');
 
-            <div class="row" style="justify-content: space-between;">
-              <button class="btn primary" id="addRecurringBtn">Add Recurring</button>
-              <div id="rMsg" class="err hide"></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Recurring List <span class="muted" id="rHint"></span></h3>
-            <div id="recurringList" class="list">
-              <div class="muted">Loading…</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- PLANNING -->
-      <section id="tab-planning" class="hide">
-        <div class="grid2">
-          <div class="card">
-            <h3>Set Monthly Budget</h3>
-
-            <div class="field">
-              <label>Monthly Budget</label>
-              <input id="budgetValue" type="number" step="0.01" placeholder="2000.00" />
-            </div>
-
-            <div class="row" style="justify-content: space-between;">
-              <button class="btn primary" id="saveBudgetBtn">Save Budget</button>
-              <div id="bMsg" class="err hide"></div>
-            </div>
-
-            <p class="note" style="margin-top:12px">
-              Budget is stored per user on the server.
-            </p>
-          </div>
-
-          <div class="card">
-            <h3>Budget Summary</h3>
-            <div class="list" id="budgetSummary">
-              <div class="muted">Loading…</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div style="height: 30px"></div>
-    </div>
-  </div>
-
-  <script>
-    // =========================
-    // State + Helpers
-    // =========================
-    const API_URL = `${window.location.origin}/api`;
-
-    const state = {
-      token: localStorage.getItem('token') || null,
-      user: null,
-      period: { from: null, to: null },
-      transactions: [],
-      recurring: [],
-      metrics: null,
-      insights: []
+  try {
+    const payload = {
+      merchant,
+      amount,
+      category: state.currentType==='expense' ? cat : null,
+      date: dateVal || new Date().toISOString().split('T')[0],
+      type: state.currentType
     };
 
-    const $ = (id) => document.getElementById(id);
-    const money = (n) => {
-      const x = Number(n || 0);
-      return x.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
-    };
-
-    function setMsg(el, text, kind = 'err') {
-      if (!el) return;
-      el.classList.remove('hide', 'err', 'ok');
-      el.classList.add(kind === 'ok' ? 'ok' : 'err');
-      el.textContent = text;
-      setTimeout(() => el.classList.add('hide'), 3500);
-    }
-
-    async function api(endpoint, method = 'GET', body = null) {
-      const headers = { 'Content-Type': 'application/json' };
-      if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
-
-      const res = await fetch(`${API_URL}${endpoint}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : null
-      });
-
-      // If backend returns HTML, your fallback is catching API routes.
-      const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) {
-        const text = await res.text();
-        throw new Error(`Expected JSON but got: ${ct}. First 60 chars: ${text.slice(0,60)}`);
-      }
-
-      const data = await res.json();
-
-      if (res.status === 401) {
-        logout();
-        throw new Error(data?.error || 'Unauthorized');
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.error || 'Request failed');
-      }
-
-      return data;
-    }
-
-    function logout() {
-      state.token = null;
-      state.user = null;
-      localStorage.removeItem('token');
-      showAuth();
-    }
-
-    function showAuth() {
-      $('authView').classList.remove('hide');
-      $('appView').classList.add('hide');
-    }
-    function showApp() {
-      $('authView').classList.add('hide');
-      $('appView').classList.remove('hide');
-    }
-
-    function setTab(tabName) {
-      document.querySelectorAll('.tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === tabName);
-      });
-      ['dashboard','recurring','planning'].forEach(n => {
-        $(`tab-${n}`).classList.toggle('hide', n !== tabName);
-      });
-    }
-
-    // =========================
-    // Auth
-    // =========================
-    let isSignup = false;
-
-    function syncAuthUI() {
-      $('switchAuthBtn').textContent = isSignup ? 'Switch to Login' : 'Switch to Sign up';
-      $('authSubmitBtn').textContent = isSignup ? 'Sign up' : 'Login';
-      $('nameField').style.display = isSignup ? '' : 'none';
-      $('authPassword').setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
-    }
-
-    async function submitAuth() {
-      const msg = $('authMsg');
-      msg.classList.add('hide');
-
-      const name = $('authName').value.trim();
-      const email = $('authEmail').value.trim();
-      const password = $('authPassword').value;
-
-      try {
-        if (!email || !password) throw new Error('Email and password are required');
-        if (isSignup && password.length < 6) throw new Error('Password must be at least 6 characters');
-
-        const endpoint = isSignup ? '/auth/signup' : '/auth/login';
-        const payload = isSignup ? { name, email, password } : { email, password };
-
-        const data = await api(endpoint, 'POST', payload);
-
-        state.token = data.token;
-        localStorage.setItem('token', state.token);
-
-        // Some APIs return user info; if not, we’ll still render.
-        state.user = data.user || { name: name || 'User', email };
-
-        showApp();
-        initApp();
-      } catch (e) {
-        setMsg(msg, e.message || 'Auth failed', 'err');
-      }
-    }
-
-    // =========================
-    // Dashboard rendering
-    // =========================
-    function renderHeader() {
-      const today = new Date();
-      const dateStr = today.toLocaleDateString(undefined, { weekday: 'long', year:'numeric', month:'long', day:'numeric' });
-      $('todayLine').textContent = dateStr.toUpperCase();
-      $('welcomeTitle').textContent = `Good ${today.getHours() < 12 ? 'morning' : (today.getHours()<18?'afternoon':'evening')}, ${state.user?.name || 'User'}`;
-    }
-
-    function renderMetrics() {
-      const m = state.metrics || {};
-      $('mAvailable').textContent = money(m.available);
-      $('mSavings').textContent = money(m.savings);
-      $('mBudget').textContent = money(m.budget);
-      $('mSpent').textContent = money(m.spent);
-      $('mCommitted').textContent = money(m.committed);
-    }
-
-    function filteredTransactions() {
-      const { from, to } = state.period;
-      if (!from && !to) return state.transactions;
-
-      const fromT = from ? new Date(from).setHours(0,0,0,0) : null;
-      const toT   = to   ? new Date(to).setHours(23,59,59,999) : null;
-
-      return state.transactions.filter(tx => {
-        const t = new Date(tx.date).getTime();
-        if (fromT && t < fromT) return false;
-        if (toT && t > toT) return false;
-        return true;
-      });
-    }
-
-    function renderRecent() {
-      const list = $('recentList');
-      const txs = filteredTransactions().slice(0, 7);
-
-      $('txHint').textContent = `${filteredTransactions().length} total`;
-
-      if (!txs.length) {
-        list.innerHTML = `<div class="muted">No transactions yet</div>`;
-        return;
-      }
-
-      list.innerHTML = txs.map(tx => {
-        const amt = Number(tx.amount || 0);
-        const kind = tx.type === 'income' ? 'good' : (tx.type === 'expense' ? 'bad' : 'neutral');
-        const sign = tx.type === 'income' ? '+' : (tx.type === 'expense' ? '-' : '');
-        const date = new Date(tx.date).toLocaleDateString();
-        return `
-          <div class="item">
-            <div class="left">
-              <div class="name">${escapeHtml(tx.category || 'Uncategorized')}</div>
-              <div class="meta">${escapeHtml(tx.type || 'transaction')} • ${date}</div>
-            </div>
-            <div class="amount ${kind}">${sign}${money(Math.abs(amt))}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderInsights() {
-      const box = $('insightsBox');
-      const insights = state.insights || [];
-      $('aiStatus').textContent = insights.length ? 'AI: active' : 'AI: idle';
-
-      if (!insights.length) {
-        box.innerHTML = `<div class="muted">No insights yet. Add more transactions.</div>`;
-        return;
-      }
-
-      box.innerHTML = insights.slice(0, 6).map(i => `
-        <div class="item">
-          <div class="left">
-            <div class="name">${escapeHtml(i.title || 'Insight')}</div>
-            <div class="meta">${escapeHtml(i.message || '')}</div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Simple donut chart from category totals
-    function renderDonut() {
-      const canvas = $('donut');
-      const ctx = canvas.getContext('2d');
-
-      // Ensure crisp drawing
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = Math.floor(rect.width * dpr);
-      canvas.height = Math.floor(rect.height * dpr);
-      ctx.scale(dpr, dpr);
-
-      const txs = filteredTransactions();
-      const byCat = new Map();
-
-      for (const tx of txs) {
-        if (tx.type !== 'expense') continue;
-        const c = (tx.category || 'Other').trim();
-        byCat.set(c, (byCat.get(c) || 0) + Math.abs(Number(tx.amount || 0)));
-      }
-
-      const entries = [...byCat.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 7);
-      const total = entries.reduce((s, [,v]) => s+v, 0);
-
-      $('breakdownHint').textContent = total ? `${entries.length} categories` : 'No expense data';
-
-      // Background
-      ctx.clearRect(0,0,rect.width,rect.height);
-
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-      const rOuter = Math.min(rect.width, rect.height) * 0.33;
-      const rInner = rOuter * 0.62;
-
-      // draw ring base
-      ctx.beginPath();
-      ctx.arc(cx, cy, rOuter, 0, Math.PI*2);
-      ctx.arc(cx, cy, rInner, 0, Math.PI*2, true);
-      ctx.closePath();
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
-      ctx.fill();
-
-      if (!total) return;
-
-      let start = -Math.PI / 2;
-
-      // No custom colors (per your preference): we derive grayscale-ish slices.
-      entries.forEach(([,v], idx) => {
-        const frac = v/total;
-        const end = start + frac * Math.PI * 2;
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, rOuter, start, end);
-        ctx.arc(cx, cy, rInner, end, start, true);
-        ctx.closePath();
-
-        // subtle varying alpha
-        ctx.fillStyle = `rgba(216,166,42,${0.10 + idx*0.08})`;
-        ctx.fill();
-
-        start = end;
-      });
-
-      // Center label
-      ctx.fillStyle = "rgba(255,255,255,0.85)";
-      ctx.font = "600 14px ui-sans-serif, system-ui";
-      ctx.textAlign = "center";
-      ctx.fillText("Expenses", cx, cy - 6);
-      ctx.fillStyle = "rgba(255,255,255,0.65)";
-      ctx.font = "700 18px ui-sans-serif, system-ui";
-      ctx.fillText(money(total), cx, cy + 18);
-    }
-
-    // =========================
-    // Recurring rendering
-    // =========================
-    function renderRecurring() {
-      const list = $('recurringList');
-      const items = state.recurring || [];
-      $('rHint').textContent = `${items.length} items`;
-
-      if (!items.length) {
-        list.innerHTML = `<div class="muted">No recurring expenses yet</div>`;
-        return;
-      }
-
-      list.innerHTML = items.map(r => `
-        <div class="item">
-          <div class="left">
-            <div class="name">${escapeHtml(r.name || 'Recurring')}</div>
-            <div class="meta">${escapeHtml(r.frequency || 'monthly')} • ${money(r.amount)}</div>
-          </div>
-          <button class="btn danger" data-del-recurring="${r._id}">Delete</button>
-        </div>
-      `).join('');
-    }
-
-    // =========================
-    // Budget rendering
-    // =========================
-    function renderBudgetSummary() {
-      const box = $('budgetSummary');
-      const m = state.metrics || {};
-      box.innerHTML = `
-        <div class="item">
-          <div class="left">
-            <div class="name">Monthly Budget</div>
-            <div class="meta">Stored on server</div>
-          </div>
-          <div class="amount neutral">${money(m.budget)}</div>
-        </div>
-        <div class="item">
-          <div class="left">
-            <div class="name">Spent (This month)</div>
-            <div class="meta">Expenses only</div>
-          </div>
-          <div class="amount bad">${money(m.spent)}</div>
-        </div>
-        <div class="item">
-          <div class="left">
-            <div class="name">Remaining</div>
-            <div class="meta">Budget - spent</div>
-          </div>
-          <div class="amount good">${money((m.budget||0) - (m.spent||0))}</div>
-        </div>
-      `;
-    }
-
-    // =========================
-    // Actions
-    // =========================
-    let txMode = 'expense';
-    function setTxMode(mode) {
-      txMode = mode;
-      $('modeExpense').classList.toggle('active', mode === 'expense');
-      $('modeIncome').classList.toggle('active', mode === 'income');
-      $('modeSave').classList.toggle('active', mode === 'save');
-    }
-
-    async function addTransaction() {
-      const msg = $('txMsg');
-      msg.classList.add('hide');
-
-      const category = $('txCategory').value.trim() || 'Other';
-      const amount = Number($('txAmount').value);
-      const date = $('txDate').value || new Date().toISOString().slice(0,10);
-      const note = $('txNote').value.trim();
-
-      try {
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error('Amount must be > 0');
-
-        await api('/transactions', 'POST', {
-          type: txMode,
-          category,
-          amount,
-          date,
-          note
-        });
-
-        $('txCategory').value = '';
-        $('txAmount').value = '';
-        $('txNote').value = '';
-
-        setMsg(msg, 'Transaction saved', 'ok');
-
-        await refreshAll(); // reload metrics + tx + insights
-      } catch (e) {
-        setMsg(msg, e.message || 'Failed to add transaction', 'err');
-      }
-    }
-
-    async function addRecurring() {
-      const msg = $('rMsg');
-      msg.classList.add('hide');
-
-      const name = $('rName').value.trim();
-      const amount = Number($('rAmount').value);
-      const frequency = $('rFrequency').value;
-      const dueDay = $('rDueDay').value ? Number($('rDueDay').value) : undefined;
-
-      try {
-        if (!name) throw new Error('Name is required');
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error('Amount must be > 0');
-
-        await api('/recurring', 'POST', { name, amount, frequency, dueDay });
-
-        $('rName').value = '';
-        $('rAmount').value = '';
-        $('rDueDay').value = '';
-
-        setMsg(msg, 'Recurring saved', 'ok');
-
-        await refreshAll();
-      } catch (e) {
-        setMsg(msg, e.message || 'Failed to add recurring', 'err');
-      }
-    }
-
-    async function deleteRecurring(id) {
-      try {
-        await api(`/recurring/${id}`, 'DELETE');
-        await refreshAll();
-      } catch (e) {
-        alert(e.message || 'Failed to delete recurring');
-      }
-    }
-
-    async function saveBudget() {
-      const msg = $('bMsg');
-      msg.classList.add('hide');
-
-      const v = Number($('budgetValue').value);
-      try {
-        if (!Number.isFinite(v) || v < 0) throw new Error('Budget must be 0 or more');
-
-        await api('/budget', 'POST', { monthlyBudget: v });
-        setMsg(msg, 'Budget saved', 'ok');
-
-        await refreshAll();
-      } catch (e) {
-        setMsg(msg, e.message || 'Failed to save budget', 'err');
-      }
-    }
-
-    function exportData() {
-      const txs = state.transactions || [];
-      const rec = state.recurring || [];
-
-      // Always provide CSV (works in Excel)
-      const txRows = [
-        ['type','category','amount','date','note'],
-        ...txs.map(t => [t.type, t.category, t.amount, t.date, t.note || ''])
-      ];
-
-      const recRows = [
-        ['name','amount','frequency','dueDay'],
-        ...rec.map(r => [r.name, r.amount, r.frequency, r.dueDay || ''])
-      ];
-
-      // If XLSX is available, generate workbook.
-      if (window.XLSX) {
-        const wb = XLSX.utils.book_new();
-        const ws1 = XLSX.utils.aoa_to_sheet(txRows);
-        const ws2 = XLSX.utils.aoa_to_sheet(recRows);
-        XLSX.utils.book_append_sheet(wb, ws1, 'Transactions');
-        XLSX.utils.book_append_sheet(wb, ws2, 'Recurring');
-        XLSX.writeFile(wb, 'vault_export.xlsx');
-        return;
-      }
-
-      // Fallback CSV
-      downloadCSV('transactions.csv', txRows);
-      downloadCSV('recurring.csv', recRows);
-      alert('Exported CSV files (Excel can open them).');
-    }
-
-    function downloadCSV(filename, rows) {
-      const csv = rows.map(r =>
-        r.map(v => {
-          const s = String(v ?? '');
-          if (s.includes('"') || s.includes(',') || s.includes('\n')) return `"${s.replaceAll('"','""')}"`;
-          return s;
-        }).join(',')
-      ).join('\n');
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    // =========================
-    // Data loading
-    // =========================
-    async function refreshAll() {
-      // Load everything needed for the full UI
-      const [metrics, txResp, recurring, budget, insights] = await Promise.all([
-        api('/dashboard/metrics'),
-        api('/transactions'),
-        api('/recurring'),
-        api('/budget'),
-        api('/insights')
-      ]);
-
-      state.metrics = metrics;
-
-      // Support BOTH response shapes: {transactions:[...]} or [...]
-      state.transactions = Array.isArray(txResp) ? txResp : (txResp.transactions || []);
-
-      state.recurring = Array.isArray(recurring) ? recurring : (recurring.recurring || []);
-      state.insights = Array.isArray(insights) ? insights : (insights.insights || []);
-
-      // budget endpoint returns object
-      if (budget && typeof budget === 'object') {
-        // if you want to display it directly in planning
-        $('budgetValue').value = (budget.monthlyBudget ?? state.metrics?.budget ?? 0);
-      }
-
-      renderMetrics();
-      renderRecent();
-      renderDonut();
-      renderRecurring();
-      renderBudgetSummary();
-      renderInsights();
-    }
-
-    function initDates() {
-      const today = new Date().toISOString().slice(0,10);
-      $('txDate').value = today;
-
-      // Default period: current month
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-      const end = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
-
-      $('fromDate').value = start;
-      $('toDate').value = end;
-
-      state.period.from = start;
-      state.period.to = end;
-    }
-
-    function applyPeriod() {
-      state.period.from = $('fromDate').value || null;
-      state.period.to = $('toDate').value || null;
-      renderRecent();
-      renderDonut();
-    }
-
-    function resetPeriod() {
-      state.period.from = null;
-      state.period.to = null;
-      $('fromDate').value = '';
-      $('toDate').value = '';
-      renderRecent();
-      renderDonut();
-    }
-
-    // =========================
-    // Safety
-    // =========================
-    function escapeHtml(str) {
-      return String(str ?? '').replace(/[&<>"']/g, s => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-      }[s]));
-    }
-
-    // =========================
-    // Boot
-    // =========================
-    async function initApp() {
-      renderHeader();
-      initDates();
-      setTab('dashboard');
-      await refreshAll();
-    }
-
-    // Event wiring
-    document.addEventListener('click', async (e) => {
-      const tab = e.target.closest('.tab');
-      if (tab) setTab(tab.dataset.tab);
-
-      if (e.target.id === 'logoutBtn') logout();
-      if (e.target.id === 'exportBtn') exportData();
-
-      if (e.target.id === 'switchAuthBtn') {
-        isSignup = !isSignup;
-        syncAuthUI();
-      }
-
-      if (e.target.id === 'authSubmitBtn') submitAuth();
-
-      if (e.target.id === 'modeExpense') setTxMode('expense');
-      if (e.target.id === 'modeIncome') setTxMode('income');
-      if (e.target.id === 'modeSave') setTxMode('save');
-
-      if (e.target.id === 'addTxBtn') addTransaction();
-      if (e.target.id === 'addRecurringBtn') addRecurring();
-      if (e.target.id === 'saveBudgetBtn') saveBudget();
-
-      if (e.target.id === 'applyPeriodBtn') applyPeriod();
-      if (e.target.id === 'resetPeriodBtn') resetPeriod();
-
-      const del = e.target.getAttribute('data-del-recurring');
-      if (del) deleteRecurring(del);
+    const res = await apiCall('/transactions', 'POST', payload); // :contentReference[oaicite:18]{index=18}
+
+    const t = res.transaction;
+    const updatedUser = res.user;
+
+    // Insert tx into local state for UI
+    state.transactions.unshift({
+      id: t._id || t.id,
+      merchant: t.merchant,
+      amount: Number(t.amount),
+      category: t.category,
+      date: t.date,
+      type: t.type
     });
 
-    document.addEventListener('keydown', (e) => {
-      // Enter key on auth form
-      if ($('authView') && !$('authView').classList.contains('hide')) {
-        if (e.key === 'Enter') submitAuth();
-      }
-    });
+    // Update balances from backend truth
+    state.availableBalance = updatedUser.availableBalance ?? state.availableBalance;
+    state.savingsBalance   = updatedUser.savingsBalance ?? state.savingsBalance;
+    state.totalIncome      = updatedUser.totalIncome ?? state.totalIncome;
+    state.streak           = updatedUser.streak ?? state.streak;
+    state.budgetsByMonth   = updatedUser.budgetsByMonth ?? state.budgetsByMonth;
 
-    // Startup
-    (function boot() {
-      syncAuthUI();
+    // Keep budgetSpent consistent for current month if your original helpers exist
+    if (typeof getCurrentMonthBudget === 'function') {
+      state.budgetSpent = getCurrentMonthBudget().spent;
+    }
 
-      if (state.token) {
-        // Token exists — show app and load
-        state.user = { name: 'User' }; // optional; backend can also return user from auth endpoints
-        showApp();
-        initApp().catch(err => {
-          console.error(err);
-          logout();
-        });
-      } else {
-        showAuth();
+    // Clear inputs (keep original behavior)
+    document.getElementById('tx-amount').value = '';
+    toast('Added', `${merchant} — ${fmt(amount)}`, 'success');
+
+    updateAll?.();
+    updateRecurringPage?.();
+    updatePlanningPage?.();
+    runAI?.();
+
+  } catch (err) {
+    console.error(err);
+    toast('Error', err.message || 'Failed to add transaction', 'error');
+  }
+}
+
+function openDeleteModal(id) {
+  state.txToDelete = id;
+  openModal('modal-delete');
+}
+
+async function confirmDelete() {
+  const id = state.txToDelete;
+  if (!id) { closeModal('modal-delete'); return; }
+
+  try {
+    const res = await apiCall(`/transactions/${id}`, 'DELETE'); // :contentReference[oaicite:19]{index=19}
+
+    // Remove from local list
+    state.transactions = state.transactions.filter(t => String(t.id) !== String(id));
+
+    // Update balances from backend truth
+    if (res.user) {
+      state.availableBalance = res.user.availableBalance ?? state.availableBalance;
+      state.savingsBalance   = res.user.savingsBalance ?? state.savingsBalance;
+      state.totalIncome      = res.user.totalIncome ?? state.totalIncome;
+      state.budgetsByMonth   = res.user.budgetsByMonth ?? state.budgetsByMonth;
+      if (typeof getCurrentMonthBudget === 'function') {
+        state.budgetSpent = getCurrentMonthBudget().spent;
       }
-    })();
-  </script>
-</body>
-</html>
+    }
+
+    closeModal('modal-delete');
+    toast('Deleted','Transaction removed','success');
+
+    updateAll?.();
+    updatePlanningPage?.();
+    runAI?.();
+  } catch (err) {
+    console.error(err);
+    toast('Error', err.message || 'Failed to delete', 'error');
+  }
+}
+
+// ════════════════════════════════════════════
+//  BUDGET (backend write)
+// ════════════════════════════════════════════
+async function setMonthlyBudget(amount) {
+  const val = Number(amount);
+  if (!val || val <= 0) { toast('Error', 'Invalid budget amount', 'error'); return; }
+
+  try {
+    const res = await apiCall('/budget', 'POST', { amount: val }); // :contentReference[oaicite:20]{index=20}
+    state.monthlyBudget = res.monthlyBudget ?? val;
+    state.budgetsByMonth = res.budgetsByMonth ?? state.budgetsByMonth;
+
+    toast('Budget Updated', `Monthly budget set to ${fmt(state.monthlyBudget)}`, 'success');
+    updateAll?.();
+    updatePlanningPage?.();
+  } catch (err) {
+    console.error(err);
+    toast('Error', err.message || 'Failed to set budget', 'error');
+  }
+}
+
+// If your original UI calls openBudgetModal/saveBudgetFromModal,
+// keep those and just call setMonthlyBudget(...) inside them.
+
+// Category budgets remain local unless you want to persist them too.
+async function setCategoryBudget(category, amount) {
+  // You DO have POST /api/budget/category :contentReference[oaicite:21]{index=21}
+  // But the backend doesn’t provide GET to load catBudgets across devices in the code shared.
+  // So we’ll store locally AND optionally push to backend.
+  state.catBudgets[category] = Number(amount || 0);
+  saveLocalPrefsOnly();
+
+  try {
+    await apiCall('/budget/category', 'POST', { category, amount: Number(amount || 0) });
+  } catch (e) {
+    console.warn('Category budget backend save failed (kept local):', e.message);
+  }
+
+  updateAll?.();
+  updatePlanningPage?.();
+}
+
+// ════════════════════════════════════════════
+//  RECURRING (backend write)
+// ════════════════════════════════════════════
+async function addRecurringBackend(rec) {
+  // Backend expects {name, amount, frequency, category, startDate, endDate} :contentReference[oaicite:22]{index=22}
+  const created = await apiCall('/recurring', 'POST', {
+    name: rec.name,
+    amount: rec.amount,
+    frequency: rec.frequency,
+    category: rec.category,
+    startDate: rec.startDate,
+    endDate: rec.endDate
+  });
+
+  return {
+    ...rec,
+    id: created._id || created.id
+  };
+}
+
+async function deleteRecurringBackend(id) {
+  await apiCall(`/recurring/${id}`, 'DELETE'); // :contentReference[oaicite:23]{index=23}
+}
+
+// If your original addRecurring() exists, keep UI the same but change the “push to state” part:
+async function addRecurring() {
+  const name = document.getElementById('rec-name').value.trim();
+  const cat = document.getElementById('rec-cat').value;
+  const amount = parseFloat(document.getElementById('rec-amount').value);
+  const freq = document.getElementById('rec-freq').value;
+  const startDate = document.getElementById('rec-start').value;
+  const endDate = document.getElementById('rec-end').value;
+  const autoRecord = document.getElementById('rec-auto-toggle').classList.contains('on');
+
+  if (!name) { toast('Error','Enter a name','error'); return; }
+  if (!amount||amount<=0) { toast('Error','Enter valid amount','error'); return; }
+  if (!startDate) { toast('Error','Select start date','error'); return; }
+
+  try {
+    const localRec = { id: null, name, category:cat, amount, frequency:freq, startDate, endDate:endDate||null, autoRecord };
+    const saved = await addRecurringBackend(localRec);
+
+    state.recurringExpenses.push(saved);
+
+    closeModal('modal-recurring');
+    toast('Recurring Added', `${name} — ${fmt(toMonthlyAmount(amount,freq))}/mo`, 'success');
+
+    updateRecurringPage?.();
+    updateDailyBanner?.();
+    updateAll?.();
+  } catch (err) {
+    console.error(err);
+    toast('Error', err.message || 'Failed to add recurring', 'error');
+  }
+}
+
+async function deleteRecurring(id) {
+  try {
+    await deleteRecurringBackend(id);
+  } catch (e) {
+    console.warn('Recurring delete backend failed:', e.message);
+  }
+  state.recurringExpenses = state.recurringExpenses.filter(r => String(r.id) !== String(id));
+  toast('Removed','Recurring expense deleted','info');
+  updateRecurringPage?.();
+  updateDailyBanner?.();
+  updateAll?.();
+}
+
+// ════════════════════════════════════════════
+//  UI NAV (keep original)
+// ════════════════════════════════════════════
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    const pages = ['dashboard','recurring','planning'];
+    t.classList.toggle('active', pages[i] === page);
+  });
+
+  if (page === 'recurring') updateRecurringPage?.();
+  if (page === 'planning') updatePlanningPage?.();
+}
+
+// ════════════════════════════════════════════
+//  FORMATTERS (use your originals if present)
+// ════════════════════════════════════════════
+function fmt(n) {
+  const cur = CURRENCIES[state.currency] || CURRENCIES.USD;
+  return new Intl.NumberFormat(cur.locale, { style:'currency', currency: state.currency }).format(Number(n||0));
+}
+
+// If your original file defines toMonthlyAmount/getMonthKey/etc, keep them.
+// If not, minimal fallback:
+function toMonthlyAmount(amount, freq) {
+  const a = Number(amount||0);
+  if (freq === 'weekly') return a * 4;
+  if (freq === 'yearly') return a / 12;
+  return a; // monthly default
+}
+
+// ════════════════════════════════════════════
+//  STREAK, MODAL, TOAST, CONFETTI
+//  (copied from your original snippets)
+// ════════════════════════════════════════════
+function updateStreakUI() {
+  if (state.streak>0) {
+    document.getElementById('streak-display').style.display='flex';
+    document.getElementById('streak-num').textContent=state.streak;
+  }
+}
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+function toast(title,msg,type='success') {
+  const c=document.getElementById('toast-container');
+  if (!c) { alert(`${title}: ${msg}`); return; }
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<div class="toast-dot"></div><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+  c.appendChild(el);
+  const delay=type==='error'?5000:3000;
+  setTimeout(()=>{ el.classList.add('fade-out'); setTimeout(()=>el.remove(),300); },delay);
+}
+
+// ════════════════════════════════════════════
+//  AUTO-BOOT ON REFRESH (if token exists)
+// ════════════════════════════════════════════
+(async function init() {
+  // Keep your original default auth tab
+  switchTab('login');
+
+  // If already logged in, boot immediately
+  if (token && persistedUser) {
+    state.user = persistedUser;
+    try {
+      await bootApp();
+    } catch (e) {
+      console.warn('Auto-boot failed:', e.message);
+      // fallback to auth screen
+      document.getElementById('auth-screen').style.display = 'flex';
+    }
+  }
+})();
+</script>

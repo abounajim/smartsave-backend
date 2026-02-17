@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');  // Changed from 'bcrypt' to 'bcryptjs'
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 
-// @route   POST /api/auth/signup
+// @route   POST /api/auth/register  (Frontend calls this)
 // @desc    Register new user
 // @access  Public
-router.post('/signup', [
+router.post('/register', [
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')

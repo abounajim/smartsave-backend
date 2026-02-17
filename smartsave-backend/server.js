@@ -13,7 +13,20 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartsave')
 .then(() => console.log('✅ MongoDB connected'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
-
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'SmartSave API is running!',
+    endpoints: [
+      '/api/health',
+      '/api/auth',
+      '/api/transactions',
+      '/api/budget',
+      '/api/insights',
+      '/api/recurring'
+    ]
+  });
+});
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));

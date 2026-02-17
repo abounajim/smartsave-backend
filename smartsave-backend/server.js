@@ -33,6 +33,9 @@ app.get('/api/health', (req, res) => {
 
 // Fallback: serve frontend for all other routes
 app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

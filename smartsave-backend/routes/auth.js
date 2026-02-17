@@ -1,58 +1,73 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');  // Changed from 'bcrypt' to 'bcryptjs'
-const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
+const auth = require('../middleware/auth');
+const Transaction = require('../models/Transaction');
 const User = require('../models/User');
+const { getMonthKey } = require('../utils/calculations');
 
-// @route   POST /api/auth/register  (Frontend calls this)
-// @desc    Register new user
-// @access  Public
-router.post('/register', [
-  body('name').trim().notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+// @route   POST /api/transactions
+router.post('/', auth, async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { merchant, amount, category, date, type } = req.body;
 
-    // Check if user exists
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ error: 'User already exists' });
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    // Create user
-    user = new User({
-      name,
-      email,
-      password: hashedPassword
+    if (type === 'save' && amount > user.availableBalance) {
+      return res.status(400).json({ error: 'Insufficient balance' });
+    }
+
+    const transaction = new Transaction({
+      userId: req.userId,
+      merchant,
+      amount,
+      category: type === 'expense' ? category : null,
+      date: date || new Date().toISOString().split('T')[0],
+      type
     });
+
+    await transaction.save();
+
+    if (type === 'income') {
+      user.availableBalance += amount;
+      user.totalIncome += amount;
+    } else if (type === 'expense') {
+      user.availableBalance -= amount;
+
+      const monthKey = getMonthKey(transaction.date);
+      if (!user.budgetsByMonth) user.budgetsByMonth = new Map();
+      if (!user.budgetsByMonth.get(monthKey)) {
+        user.budgetsByMonth.set(monthKey, { budget: user.monthlyBudget, spent: 0 });
+      }
+      const monthData = user.budgetsByMonth.get(monthKey);
+      monthData.spent += amount;
+      user.budgetsByMonth.set(monthKey, monthData);
+    } else if (type === 'save') {
+      user.availableBalance -= amount;
+      user.savingsBalance += amount;
+    }
+
+    // Update streak
+    const today = new Date().toISOString().split('T')[0];
+    const todayTxs = await Transaction.find({ userId: req.userId, date: today });
+    if (todayTxs.length === 1) user.streak += 1;
 
     await user.save();
 
-    // Create JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
-
     res.json({
-      token,
+      transaction,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
+        availableBalance: user.availableBalance,
+        savingsBalance: user.savingsBalance,
+        totalIncome: user.totalIncome,
+        streak: user.streak,
+        budgetsByMonth: Object.fromEntries(user.budgetsByMonth)
       }
     });
   } catch (err) {
@@ -61,46 +76,63 @@ router.post('/register', [
   }
 });
 
-// @route   POST /api/auth/login
-// @desc    Login user
-// @access  Public
-router.post('/login', [
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').notEmpty().withMessage('Password is required')
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+// @route   GET /api/transactions
+// FIXED: Returns { transactions: [] } format that frontend expects
+router.get('/', auth, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const transactions = await Transaction.find({ userId: req.userId })
+      .sort({ date: -1, createdAt: -1 });
 
-    // Check if user exists
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+    // Return as object with transactions key - frontend expects this format
+    res.json({ transactions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/transactions/:id
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const transaction = await Transaction.findOne({
+      _id: req.params.id,
+      userId: req.userId
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
     }
 
-    // Validate password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+    const user = await User.findById(req.userId);
+
+    if (transaction.type === 'income') {
+      user.availableBalance -= transaction.amount;
+      user.totalIncome -= transaction.amount;
+    } else if (transaction.type === 'expense') {
+      user.availableBalance += transaction.amount;
+
+      const monthKey = getMonthKey(transaction.date);
+      if (user.budgetsByMonth && user.budgetsByMonth.get(monthKey)) {
+        const monthData = user.budgetsByMonth.get(monthKey);
+        monthData.spent -= transaction.amount;
+        if (monthData.spent < 0) monthData.spent = 0;
+        user.budgetsByMonth.set(monthKey, monthData);
+      }
+    } else if (transaction.type === 'save') {
+      user.availableBalance += transaction.amount;
+      user.savingsBalance -= transaction.amount;
     }
 
-    // Create JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
+    await user.save();
+    await transaction.deleteOne();
 
     res.json({
-      token,
+      message: 'Transaction deleted',
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
+        availableBalance: user.availableBalance,
+        savingsBalance: user.savingsBalance,
+        totalIncome: user.totalIncome,
+        budgetsByMonth: Object.fromEntries(user.budgetsByMonth || new Map())
       }
     });
   } catch (err) {

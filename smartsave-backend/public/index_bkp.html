@@ -228,24 +228,6 @@ body {
 const API_URL = 'https://smartsave-backend-j3f0.onrender.com/api';
 
 // ════════════════════════════════════════════════════
-//  BACKEND HEALTH CHECK
-// ════════════════════════════════════════════════════
-async function checkBackend() {
-  try {
-    const res = await fetch(`${API_URL}/health`);
-    const data = await res.json();
-    console.log('✅ Backend is running:', data);
-  } catch (err) {
-    console.error('❌ Backend unreachable:', err.message);
-    // Show warning to user
-    const warning = document.createElement('div');
-    warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f87171;color:white;text-align:center;padding:0.75rem;font-size:0.85rem;z-index:9999;font-family:monospace;';
-    warning.textContent = '⚠️ Backend is starting up, please wait 30 seconds and refresh...';
-    document.body.appendChild(warning);
-  }
-}
-
-// ════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════
 let token = localStorage.getItem('token') || null;
@@ -270,11 +252,6 @@ async function handleAuth(e) {
   
   const endpoint = isLogin ? '/auth/login' : '/auth/signup';
   const body = isLogin ? { email, password } : { name, email, password };
-
-  // Show loading state
-  const btn = document.getElementById('auth-submit');
-  btn.textContent = 'Please wait...';
-  btn.disabled = true;
   
   try {
     const res = await fetch(`${API_URL}${endpoint}`, {
@@ -291,18 +268,11 @@ async function handleAuth(e) {
       localStorage.setItem('token', token);
       bootApp();
     } else {
-      // Show specific error
-      const errMsg = data.error || 
-                     (data.errors && data.errors[0]?.msg) || 
-                     'Authentication failed';
-      alert(errMsg);
+      alert(data.error || 'Authentication failed');
     }
   } catch (err) {
-    console.error('Auth error:', err);
-    alert(`Connection failed. Make sure backend is running.\nURL: ${API_URL}\nError: ${err.message}`);
-  } finally {
-    btn.textContent = isLogin ? 'Login' : 'Create Account';
-    btn.disabled = false;
+    alert('Network error. Please try again.');
+    console.error(err);
   }
 }
 
@@ -488,9 +458,6 @@ function showError(msg) {
 //  INIT
 // ════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  // Check if backend is reachable first
-  checkBackend();
-  
   if (token) {
     // Verify token and boot
     bootApp();

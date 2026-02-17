@@ -250,7 +250,7 @@ async function handleAuth(e) {
   const name = document.getElementById('inp-name').value;
   const isLogin = document.getElementById('tab-login').classList.contains('active');
   
-  const endpoint = isLogin ? '/auth/login' : '/auth/register';
+  const endpoint = isLogin ? '/auth/login' : '/auth/signup';
   const body = isLogin ? { email, password } : { name, email, password };
   
   try {
